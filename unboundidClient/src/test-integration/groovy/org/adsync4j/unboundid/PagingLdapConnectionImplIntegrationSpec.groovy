@@ -16,11 +16,9 @@ import com.unboundid.ldap.sdk.LDAPConnection
 import com.unboundid.ldap.sdk.SearchRequest
 import com.unboundid.ldap.sdk.SearchScope
 import org.adsync4j.testutils.ldap.EmbeddedUnboundIDLdapServer
-import org.adsync4j.unboundid.PagingLdapConnection
-import org.adsync4j.unboundid.PagingLdapConnectionImpl
 import spock.lang.Specification
 
-import static org.adsync4j.testutils.IOUtils.getResourceAsStreamOrFail
+import static org.adsync4j.testutils.TestUtils.getResourceAsStreamOrFail
 
 class PagingLdapConnectionImplIntegrationSpec extends Specification {
 

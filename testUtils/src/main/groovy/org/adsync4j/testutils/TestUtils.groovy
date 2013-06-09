@@ -13,7 +13,27 @@
  ***************************************************************************** */
 package org.adsync4j.testutils
 
-class ConversionUtils {
+import org.codehaus.groovy.reflection.ReflectionUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+class TestUtils {
+    private final static Logger LOG = LoggerFactory.getLogger(TestUtils)
+
+    static InputStream getResourceAsStreamOrFail(resourceLocation) {
+        def clazz
+
+        if (ReflectionUtils.isCallingClassReflectionAvailable()) {
+             clazz = ReflectionUtils.callingClass
+        } else {
+            clazz = getClass()
+            LOG.warn 'Could not determine class of caller --> can only resolve resources specified with full package path.'
+        }
+
+        def resourceStream = clazz.getResourceAsStream(resourceLocation)
+        assert resourceStream, "couldn't find resource: $resourceLocation"
+        resourceStream
+    }
 
     static byte[] uuidToBytArray(UUID uuid) {
         byte[] bytes = new byte[16]

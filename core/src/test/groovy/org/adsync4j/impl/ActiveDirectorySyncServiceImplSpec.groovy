@@ -13,11 +13,11 @@
  ******************************************************************************/
 package org.adsync4j.impl
 
-import org.adsync4j.testutils.ConversionUtils
 import org.adsync4j.DomainControllerAffiliation
 import org.adsync4j.EntryProcessor
 import org.adsync4j.LdapAttributeResolver
 import org.adsync4j.LdapClient
+import org.adsync4j.testutils.TestUtils
 import spock.lang.Specification
 
 import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAttribute.*
@@ -28,7 +28,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
     LdapAttributeResolver<String> attributeResolver = [
             getAsString: { it as String },
             getAsLong: { Long.valueOf(it) },
-            getAsByteArray: { ConversionUtils.uuidToBytArray(it) },
+            getAsByteArray: { TestUtils.uuidToBytArray(it) },
             getAsStringList: { [it] }
     ] as LdapAttributeResolver
 

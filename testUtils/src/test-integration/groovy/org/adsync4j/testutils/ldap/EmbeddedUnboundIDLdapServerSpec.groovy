@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 
-import static org.adsync4j.testutils.IOUtils.getResourceAsStreamOrFail
+import static org.adsync4j.testutils.TestUtils.getResourceAsStreamOrFail
 import static org.hamcrest.Matchers.is
 import static spock.util.matcher.HamcrestSupport.that
 

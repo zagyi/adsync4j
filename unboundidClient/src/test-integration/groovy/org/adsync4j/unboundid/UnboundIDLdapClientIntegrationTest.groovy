@@ -12,17 +12,14 @@
  *     Balazs Zagyvai
  ***************************************************************************** */
 package org.adsync4j.unboundid
-
 import com.unboundid.ldap.sdk.Attribute
 import com.unboundid.ldap.sdk.LDAPConnection
 import com.unboundid.ldap.sdk.LDAPInterface
-import org.adsync4j.testutils.IOUtils
 import org.adsync4j.testutils.ldap.EmbeddedUnboundIDLdapServer
-import org.adsync4j.unboundid.PagingLdapConnectionImpl
-import org.adsync4j.unboundid.PagingUnboundIDConnectionFactory
-import org.adsync4j.unboundid.UnboundIDLdapClient
 import org.junit.Before
 import org.junit.Test
+
+import static org.adsync4j.testutils.TestUtils.getResourceAsStreamOrFail
 
 class UnboundIDLdapClientIntegrationTest {
 
@@ -93,7 +90,7 @@ class UnboundIDLdapClientIntegrationTest {
     }
 
     static def loadConfig() {
-        def resource = IOUtils.getResourceAsStreamOrFail('in-memory-ldap.properties')
+        def resource = getResourceAsStreamOrFail('in-memory-ldap.properties')
         def props = new Properties()
         props.load(resource)
         config = props as Map<String, String>
@@ -103,8 +100,8 @@ class UnboundIDLdapClientIntegrationTest {
         new EmbeddedUnboundIDLdapServer()
                 .setRootDN(config['rootDN'])
                 .includeStandardSchema()
-                .addSchema(IOUtils.getResourceAsStreamOrFail('ldap.schema'))
-                .setLdifs([IOUtils.getResourceAsStreamOrFail('users.ldif')])
+                .addSchema(getResourceAsStreamOrFail('ldap.schema'))
+                .setLdifs([getResourceAsStreamOrFail('users.ldif')])
                 .init()
     }
 
