@@ -1,0 +1,59 @@
+/*******************************************************************************
+ * ADSync4J (https://github.com/zagyi/adsync4j)
+ *
+ * Copyright (c) 2013 Balazs Zagyvai
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Balazs Zagyvai
+ ***************************************************************************** */
+import org.adsync4j.gradle.Libs
+
+import static org.adsync4j.gradle.GradleUtils.addDependencies
+
+Project testUtils = project
+
+testUtils.apply plugin: 'groovy'
+testUtils.apply plugin: 'maven'
+testUtils.apply from: "$testUtils.rootDir/gradle/configureIntegrationTestSourceSet.gradle"
+
+addDependencies(testUtils, [
+        compile: [
+                Libs.groovy,
+                Libs.guava,
+                Libs.jsr305_annotations,
+                Libs.slf4j_api,
+                Libs.spring_beans,
+        ],
+
+        provided: [
+                Libs.unboundid,
+        ],
+
+        runtime: [
+                Libs.slf4j_bridge_jul,
+        ],
+
+        integrationTestCompile: [
+                Libs.groovy,
+                Libs.hamcrest,
+                Libs.spock,
+                Libs.spring_context,
+                Libs.spring_test,
+        ],
+
+        integrationTestRuntime: [
+                Libs.spock_spring,
+                Libs.slf4j_bridge_jcl,
+                Libs.unboundid,
+        ],
+])
+
+//testUtils.tasks['integrationTest'].configure { Test testTask ->
+//    testTask.classpath = reorderProjectResourcesBeforeExternalFiles(testTask.classpath, testUtils)
+//}
+

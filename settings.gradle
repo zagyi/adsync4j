@@ -1,0 +1,11 @@
+Settings st = settings
+
+st.include 'buildSrc', 'core', 'unboundidClient', 'testUtils', 'systemTesting'
+
+st.rootProject.name = 'ADSync4J'
+
+// set build file names as "<project_name>.gradle" instead of the default "build.gradle"
+st.rootProject.children.each { project ->
+    project.buildFileName = "${project.projectDir.name}.gradle"
+    assert project.buildFile.isFile()
+}

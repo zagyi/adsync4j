@@ -1,0 +1,20 @@
+dn: dc=test,dc=com
+objectClass: domain
+objectClass: top
+dc: test
+
+dn: ou=users,dc=test,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: cn=lali,ou=users,dc=test,dc=com
+objectClass: userWithGuid
+objectClass: inetOrgPerson
+objectClass: top
+cn: lali
+sn: lali
+uid: lali
+mail: lali@test.com
+#objectGUID: 32e81845-cba3-4129-84de-b9f6d423c130
+objectGUID:: RRjoMqPLKUGE3rn21CPBMA==

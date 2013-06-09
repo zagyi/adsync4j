@@ -1,0 +1,93 @@
+# List of required modifications after ldif export from Apache Directory Studio 2.0:
+#
+# - add "objectClass: securityPrincipal" to all users
+#
+
+version: 1
+
+dn: cn=User1,ou=Users,dc=adsync4j,dc=org
+objectClass: securityPrincipal
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: User1
+instanceType: 4
+objectCategory: CN=Person,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+accountExpires: 9223372036854775807
+badPasswordTime: 0
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+displayName: User1
+distinguishedName: CN=User1,OU=Users,DC=adsync4j,DC=org
+dSCorePropagationData: 20130527161014.0Z
+dSCorePropagationData: 16010101000000.0Z
+givenName: User1
+lastLogoff: 0
+lastLogon: 0
+logonCount: 0
+mail: user1@adsync4j.com
+name: User1
+objectGUID:: RENGVjTPfU2FUVP+Re7LQA==
+objectSid:: AQUAAAAAAAUVAAAA0fDCKuQnYjIClRJANggAAA==
+primaryGroupID: 513
+pwdLastSet: 130141446145254546
+sAMAccountName: user1
+sAMAccountType: 805306368
+userAccountControl: 66048
+uSNChanged: 21269
+uSNCreated: 21195
+whenChanged: 20130530201109.0Z
+whenCreated: 20130527161014.0Z
+createTimeStamp: 20130527161014.0Z
+modifyTimeStamp: 20130530201109.0Z
+structuralObjectClass: top
+structuralObjectClass: person
+structuralObjectClass: organizationalPerson
+structuralObjectClass: user
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: cn=User2,ou=Users,DC=adsync4j,DC=org
+objectClass: securityPrincipal
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: User2
+instanceType: 4
+objectCategory: CN=Person,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+accountExpires: 9223372036854775807
+badPasswordTime: 0
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+displayName: User2
+distinguishedName: CN=User2,OU=Users,DC=adsync4j,DC=org
+dSCorePropagationData: 20130530201455.0Z
+dSCorePropagationData: 16010101000000.0Z
+givenName: User2
+lastLogoff: 0
+lastLogon: 0
+logonCount: 0
+mail: user2@adsync4j.org
+name: User2
+objectGUID:: n4lyyXWK10KZ6XIz0NJSxQ==
+objectSid:: AQUAAAAAAAUVAAAA0fDCKuQnYjIClRJAOAgAAA==
+primaryGroupID: 513
+pwdLastSet: 0
+sAMAccountName: user2
+sAMAccountType: 805306368
+userAccountControl: 514
+uSNChanged: 21273
+uSNCreated: 21272
+whenChanged: 20130530201455.0Z
+whenCreated: 20130530201455.0Z
+createTimeStamp: 20130530201455.0Z
+modifyTimeStamp: 20130530201455.0Z
+structuralObjectClass: top
+structuralObjectClass: person
+structuralObjectClass: organizationalPerson
+structuralObjectClass: user
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+

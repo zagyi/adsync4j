@@ -1,0 +1,8 @@
+dn: cn=lali,ou=users,dc=test,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: lali
+sn: lali
+uid: lali
+# userPassword: lali
+userPassword:: bGFsaQ==

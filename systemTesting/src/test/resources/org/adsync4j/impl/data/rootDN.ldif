@@ -1,0 +1,86 @@
+# List of required modifications after ldif export from Apache Directory Studio 2.0:
+#
+# 1.added the following:
+#   objectClass: samDomainBase
+#   objectClass: samDomain
+#
+version: 1
+
+dn: dc=adsync4j,dc=org
+objectClass: top
+objectClass: domain
+objectClass: domainDNS
+objectClass: samDomainBase
+objectClass: samDomain
+dc: adsync4j
+instanceType: 5
+objectCategory: CN=Domain-DNS,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+auditingPolicy:: AAE=
+creationTime: 130004382426291510
+distinguishedName: DC=adsync4j,DC=org
+dSASignature:: AQAAACgAAAAAAAAAAAAAAAAAAAAAAAAAwyWB0WFqdki0cW7E6yJi6g==
+dSCorePropagationData: 16010101000000.0Z
+forceLogoff: -9223372036854775808
+fSMORoleOwner: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN
+ =Configuration,DC=adsync4j,DC=org
+gPLink: [LDAP://CN={31B2F340-016D-11D2-945F-00C04FB984F9},CN=Policies,CN=System,DC=adsync4j,DC=org;0]
+isCriticalSystemObject: TRUE
+lockoutDuration: -18000000000
+lockOutObservationWindow: -18000000000
+lockoutThreshold: 0
+masteredBy: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Co
+ nfiguration,DC=adsync4j,DC=org
+maxPwdAge: -36288000000000
+minPwdAge: -864000000000
+minPwdLength: 7
+modifiedCount: 1
+modifiedCountAtLastProm: 0
+ms-DS-MachineAccountQuota: 10
+msDS-AllUsersTrustQuota: 1000
+msDS-Behavior-Version: 5
+msDS-IsDomainFor: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites
+ ,CN=Configuration,DC=adsync4j,DC=org
+msDs-masteredBy: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,
+ CN=Configuration,DC=adsync4j,DC=org
+msDS-NcType: 0
+msDS-PerUserTrustQuota: 1
+msDS-PerUserTrustTombstonesQuota: 10
+name: adsync4j
+nextRid: 1001
+nTMixedDomain: 0
+objectGUID:: Vmywj6X4LEakYb45nURs0A==
+objectSid:: AQQAAAAAAAUVAAAA0fDCKuQnYjIClRJA
+otherWellKnownObjects: B:32:1EB93889E40C45DF9F0C64D23BBB6237:CN=Managed Service Accounts,DC=adsync4j
+ ,DC=org
+pwdHistoryLength: 24
+pwdProperties: 1
+replUpToDateVector:: AgAAAAAAAAACAAAAAAAAAOrSFSp+HylJs+yJgY5mnGN3UgAAAAAAALh1dgcDAAAAwyWB0WFqdki0cW7
+ E6yJi6llQAAAAAAAAAPvkBgMAAAA=
+rIDManagerReference: CN=RID Manager$,CN=System,DC=adsync4j,DC=org
+serverState: 1
+subRefs: DC=ForestDnsZones,DC=adsync4j,DC=org
+subRefs: DC=DomainDnsZones,DC=adsync4j,DC=org
+subRefs: CN=Configuration,DC=adsync4j,DC=org
+systemFlags: -1946157056
+uASCompat: 1
+uSNChanged: 21192
+uSNCreated: 4099
+wellKnownObjects: B:32:6227F0AF1FC2410D8E3BB10615BB5B0F:CN=NTDS Quotas,DC=adsync4j,DC=org
+wellKnownObjects: B:32:F4BE92A4C777485E878E9421D53087DB:CN=Microsoft,CN=Program Data,DC=adsync4j,DC=org
+wellKnownObjects: B:32:09460C08AE1E4A4EA0F64AEE7DAA1E5A:CN=Program Data,DC=adsync4j,DC=org
+wellKnownObjects: B:32:22B70C67D56E4EFB91E9300FCA3DC1AA:CN=ForeignSecurityPrincipals,DC=adsync4j,DC=org
+wellKnownObjects: B:32:18E2EA80684F11D2B9AA00C04F79F805:CN=Deleted Objects,DC=adsync4j,DC=org
+wellKnownObjects: B:32:2FBAC1870ADE11D297C400C04FD8D5CD:CN=Infrastructure,DC=adsync4j,DC=org
+wellKnownObjects: B:32:AB8153B7768811D1ADED00C04FD8D5CD:CN=LostAndFound,DC=adsync4j,DC=org
+wellKnownObjects: B:32:AB1D30F3768811D1ADED00C04FD8D5CD:CN=System,DC=adsync4j,DC=org
+wellKnownObjects: B:32:A361B2FFFFD211D1AA4B00C04FD7D83A:OU=Domain Controllers,DC=adsync4j,DC=org
+wellKnownObjects: B:32:AA312825768811D1ADED00C04FD8D5CD:CN=Computers,DC=adsync4j,DC=org
+wellKnownObjects: B:32:A9D1CA15768811D1ADED00C04FD8D5CD:CN=Users,DC=adsync4j,DC=org
+whenChanged: 20130527155822.0Z
+whenCreated: 20121218163035.0Z
+createTimeStamp: 20121218163035.0Z
+modifyTimeStamp: 20130527155822.0Z
+structuralObjectClass: top
+structuralObjectClass: domain
+structuralObjectClass: domainDNS
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org

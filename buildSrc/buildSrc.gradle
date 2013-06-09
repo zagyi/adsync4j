@@ -1,0 +1,51 @@
+/*******************************************************************************
+ * ADSync4J (https://github.com/zagyi/adsync4j)
+ *
+ * Copyright (c) 2013 Balazs Zagyvai
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Balazs Zagyvai
+ ***************************************************************************** */
+
+/**
+ * WHY IS THERE A build.gradle, AND A buildSrc.gradle IN THIS PROJECT?
+ *
+ * The buildSrc project is built by Gradle before any other project, and its output is automatically made available for build
+ * scripts in other projects. When executing the build of the buildSrc project, Gradle looks for a build script with the
+ * default file name ('build.gradle') . That's why we have 'build.gradle'.
+ *
+ * This works perfectly fine, however the implicit dependency of "normal" projects on the buildSrc project is not known to the
+ * IDE. That becomes a problem, because we don't get proper IDE support (e.g. code completion) when writing build scripts
+ * that use code declared in the buildSrc project. In order to fix this we would need to make a normal IDE module out of the
+ * buildSrc project and declare an explicit dependency on it in every other module(project). Since the default naming
+ * convention of the projects' build scripts is overridden in settings.gradle, we need another build script with the projects
+ * name: 'buildSrc.gradle'. This script won't be used by Gradle when it builds the buildSrc project as a first step to make it
+ * available to other build scripts, but it will be used later, and the buildSrc project will be built again as a normal
+ * sub-project during the build process. This is kind of a weird workaround, but it doesn't make much harm, and we get the
+ * desired IDE support at the end, when 'gradle idea' is used to generate the proper IntelliJ IDEA modules.
+ */
+
+import org.adsync4j.gradle.Libs
+
+Project buildSrc = project
+RepositoryHandler repo = buildSrc.repositories
+String provided = 'provided'
+
+buildSrc.apply plugin: 'groovy'
+
+buildSrc.repositories {
+    repo.mavenLocal()
+    repo.mavenCentral()
+}
+
+buildSrc.dependencies.with {
+    add(provided, Libs.groovy)
+    add(provided, Libs.guava)
+    add(provided, Libs.slf4j_api)
+    add(provided, Libs.gradle)
+}

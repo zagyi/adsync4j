@@ -1,0 +1,148 @@
+/*******************************************************************************
+ * ADSync4J (https://github.com/zagyi/adsync4j)
+ *
+ * Copyright (c) 2013 Balazs Zagyvai
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Balazs Zagyvai
+ ***************************************************************************** */
+import org.adsync4j.gradle.IdeaUtils
+import org.adsync4j.gradle.Libs
+import org.adsync4j.gradle.Projects
+import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.plugins.ide.idea.model.Module
+import org.gradle.plugins.ide.idea.model.ModuleLibrary
+import org.gradle.plugins.ide.idea.model.Path
+
+import static org.adsync4j.gradle.GradleUtils.addDependencies
+
+Project rootPrj = project
+
+Libs.init(rootPrj)
+Projects.init(rootPrj)
+
+rootPrj.allprojects.each { prj ->
+    def repo = prj.repositories
+
+    prj.apply plugin: 'groovy'
+    prj.apply plugin: 'idea'
+    prj.apply from: "$rootPrj.rootDir/gradle/providedConfiguration.gradle"
+
+    prj.group = 'org.adsync4j'
+    prj.version = '0.1'
+
+    prj.configurations.all { Configuration configuration ->
+        configuration.exclude group: 'commons-logging'
+    }
+
+    prj.repositories {
+        repo.mavenLocal()
+        repo.mavenCentral()
+    }
+
+    addDependencies(prj, [provided: [Libs.gradle]])
+
+    if (!'buildSrc'.equals(prj.name)) {
+        addDependencies(prj, [provided: [Projects.buildSrc]])
+    }
+
+    sortIdeaDependencies(prj)
+    attachGradleSourcesInIdea(prj)
+    propagateSystemPropertiesToTestJVMs(prj)
+}
+
+def sortIdeaDependencies(Project prj) {
+    IdeaModel idea = prj.idea
+    idea.module.iml.whenMerged { Module module ->
+        def sortedDependencies = new TreeSet(IdeaUtils.dependenciesOrdering)
+        sortedDependencies.addAll(module.dependencies)
+        module.dependencies = sortedDependencies
+    }
+}
+
+def attachGradleSourcesInIdea(Project prj) {
+    IdeaModel idea = prj.idea
+    def gradleHome = System.getenv('GRADLE_HOME')
+    if (checkIfGradleSourcesAreAvailable(prj, gradleHome)) {
+        def gradleSrcPath = new Path("file://${gradleHome}/src")
+        Set gradleJarPaths = Libs.gradle.collect { File gradleJar -> gradleJar.getAbsolutePath() } as Set
+
+        idea.module.iml.whenMerged { Module module ->
+            module.dependencies.each { dependency ->
+                def isExternalDependency = dependency instanceof ModuleLibrary
+                if (isExternalDependency) {
+                    def pathsOfDependentLib = extractPaths(dependency)
+                    def isAGradleJarDependency = gradleJarPaths.intersect(pathsOfDependentLib)
+                    if (isAGradleJarDependency) {
+                        dependency.sources.add(gradleSrcPath)
+                    }
+                }
+            }
+        }
+    }
+}
+
+def propagateSystemPropertiesToTestJVMs(Project prj) {
+    prj.tasks.withType(Test) { Test test ->
+        // propagate system properties from Gradle JVM to the forked test JVM
+        test.systemProperties = System.getProperties()
+        if (System.getProperty('attachDebugger') != null) {
+            test.jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
+        }
+    }
+}
+
+def checkIfGradleSourcesAreAvailable(Project prj, gradleHome) {
+    def hasSources = false
+    if (gradleHome) {
+        hasSources = new File("${gradleHome}/src").exists()
+        if (!hasSources) {
+            prj.logger.warn(
+                    "Cannot attach Gradle sources to prject $prj.name. Sources not " +
+                            "found under \$GRADLE_HOME/src ($gradleHome/src).")
+        }
+    } else {
+        prj.logger.warn(
+                "Cannot attach Gradle sources to prject $prj.name, because the " +
+                        "GRADLE_HOME environment variable is unset.")
+    }
+    return hasSources
+}
+
+Set extractPaths(ModuleLibrary ml) {
+    if (!ml.classes.isEmpty()) {
+        ml.classes.collect { Path path ->
+            def match = (path.url =~ /.+:\/\/(.*\.jar).*/)
+            if (match) {
+                match[0][1]
+            }
+        } as Set
+    } else {
+        [] as Set
+    }
+}
+
+rootPrj.subprojects.each { subPrj ->
+    def java = subPrj.convention.getPlugin(JavaPluginConvention)
+    java.sourceCompatibility = 1.7
+    java.targetCompatibility = 1.7
+
+    if (subPrj.plugins.hasPlugin('maven')) {
+        // the install task depends on the jar task by default, which won't trigger test execution
+        subPrj.task('install').dependsOn ':build'
+    }
+}
+
+rootPrj.tasks.create(name: 'wrapper', type: Wrapper) { Wrapper wrapper ->
+    wrapper.gradleVersion = '1.6'
+}
+
+def userGradleScript = rootPrj.file("gradle/userScripts/${System.getProperty("user.name")}.gradle")
+if (userGradleScript.exists()) {
+    rootPrj.apply from: userGradleScript
+}

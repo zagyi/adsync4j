@@ -1,0 +1,33 @@
+import org.adsync4j.gradle.Projects
+
+import static org.adsync4j.gradle.Projects.systemTesting
+
+Project prj = project
+
+prj.evaluationDependsOn(systemTesting.path)
+
+systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask ->
+    def dir = '../unversioned/systemTest'
+    def adPropertiesLocation = systemTesting.file("$dir/active-directory.properties").absolutePath
+    def expectedEntriesFile = systemTesting.file("$dir/expectedEntries.groovycfg").absolutePath
+    testTask.jvmArgs ([
+            "-DadPropertiesLocation=file://$adPropertiesLocation",
+            "-DexpectedEntriesFile=file://$expectedEntriesFile",
+    ])
+}
+
+prj.rootProject.tasks.create('taskDirs') {
+    def tasksBaseDir = prj.rootProject.file('gradle/tasks')
+    tasksBaseDir.deleteDir()
+    prj.rootProject.allprojects.each {
+        def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
+        it.tasks.each { task ->
+            def taskDir = new File(prjTaskBaseDir, task.name)
+            taskDir.mkdirs()
+        }
+    }
+}
+
+prj.rootProject.tasks['clean'].doLast {
+    prj.rootProject.file('gradle/tasks').deleteDir()
+}

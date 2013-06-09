@@ -1,0 +1,184 @@
+# file contains a subset of the 'cn=Configuration,dc=adsync4j,dc=org' tree that is needed to determine the invocationId of the
+# Active Directory server
+#
+# exported from Apache Directory Studio
+#
+version: 1
+
+dn: cn=Configuration,dc=adsync4j,dc=org
+objectClass: top
+objectClass: configuration
+cn: Configuration
+instanceType: 13
+objectCategory: CN=Configuration,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+distinguishedName: CN=Configuration,DC=adsync4j,DC=org
+dSASignature:: AQAAACgAAAAAAAAAAAAAAAAAAAAAAAAAwyWB0WFqdki0cW7E6yJi6g==
+dSCorePropagationData: 16010101000000.0Z
+masteredBy: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Co
+ nfiguration,DC=adsync4j,DC=org
+msDs-masteredBy: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,
+ CN=Configuration,DC=adsync4j,DC=org
+msDS-NcType: 0
+name: Configuration
+objectGUID:: YIGccjlHC0Cap5b4rGWnvQ==
+replUpToDateVector:: AgAAAAAAAAACAAAAAAAAAOrSFSp+HylJs+yJgY5mnGN3UgAAAAAAALh1dgcDAAAAwyWB0WFqdki0cW7
+ E6yJi6llQAAAAAAAAAPvkBgMAAAA=
+showInAdvancedViewOnly: TRUE
+subRefs: CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+uSNChanged: 12785
+uSNCreated: 4101
+wellKnownObjects: B:32:6227F0AF1FC2410D8E3BB10615BB5B0F:CN=NTDS Quotas,CN=Configuration,DC=adsync4j,
+ DC=org
+wellKnownObjects: B:32:AB8153B7768811D1ADED00C04FD8D5CD:CN=LostAndFoundConfig,CN=Configuration,DC=ad
+ sync4j,DC=org
+wellKnownObjects: B:32:18E2EA80684F11D2B9AA00C04F79F805:CN=Deleted Objects,CN=Configuration,DC=adsyn
+ c4j,DC=org
+whenChanged: 20121218173319.0Z
+whenCreated: 20121218163035.0Z
+createTimeStamp: 20121218163035.0Z
+modifyTimeStamp: 20121218173319.0Z
+structuralObjectClass: top
+structuralObjectClass: configuration
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+objectClass: top
+objectClass: sitesContainer
+instanceType: 4
+objectCategory: CN=Sites-Container,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+cn: Sites
+distinguishedName: CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+dSCorePropagationData: 16010101000000.0Z
+name: Sites
+objectGUID:: 5/A0HJvPf0S17h57G4e9cw==
+showInAdvancedViewOnly: TRUE
+systemFlags: -2113929216
+uSNChanged: 4107
+uSNCreated: 4107
+whenChanged: 20121218163036.0Z
+whenCreated: 20121218163036.0Z
+createTimeStamp: 20121218163036.0Z
+modifyTimeStamp: 20121218163036.0Z
+structuralObjectClass: top
+structuralObjectClass: sitesContainer
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+objectClass: top
+objectClass: site
+instanceType: 4
+objectCategory: CN=Site,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+cn: Default-First-Site-Name
+distinguishedName: CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+dSCorePropagationData: 16010101000000.0Z
+name: Default-First-Site-Name
+objectGUID:: yK0RLK8uQkOEOzs58e848A==
+showInAdvancedViewOnly: TRUE
+systemFlags: 1107296256
+uSNChanged: 4113
+uSNCreated: 4113
+whenChanged: 20121218163036.0Z
+whenCreated: 20121218163036.0Z
+createTimeStamp: 20121218163036.0Z
+modifyTimeStamp: 20121218163036.0Z
+structuralObjectClass: top
+structuralObjectClass: site
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+objectClass: top
+objectClass: serversContainer
+instanceType: 4
+objectCategory: CN=Servers-Container,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+cn: Servers
+distinguishedName: CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=adsync4j,DC=org
+dSCorePropagationData: 16010101000000.0Z
+name: Servers
+objectGUID:: OPM0Ptf/2UuV8574icJPpg==
+showInAdvancedViewOnly: TRUE
+systemFlags: 33554432
+uSNChanged: 4115
+uSNCreated: 4115
+whenChanged: 20121218163036.0Z
+whenCreated: 20121218163036.0Z
+createTimeStamp: 20121218163036.0Z
+modifyTimeStamp: 20121218163036.0Z
+structuralObjectClass: top
+structuralObjectClass: serversContainer
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuration,DC=adsync4j,D
+ C=org
+objectClass: top
+objectClass: server
+instanceType: 4
+objectCategory: CN=Server,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+cn: WIN-C6SAQM0CG0F
+distinguishedName: CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuratio
+ n,DC=adsync4j,DC=org
+dNSHostName: WIN-C6SAQM0CG0F.adsync4j.org
+dSCorePropagationData: 20121218163259.0Z
+dSCorePropagationData: 16010101000004.0Z
+name: WIN-C6SAQM0CG0F
+objectGUID:: SoxlFZIsdk+0ndAybM87Pg==
+serverReference: CN=WIN-C6SAQM0CG0F,OU=Domain Controllers,DC=adsync4j,DC=org
+showInAdvancedViewOnly: TRUE
+systemFlags: 1375731712
+uSNChanged: 12455
+uSNCreated: 5952
+whenChanged: 20121218163324.0Z
+whenCreated: 20121218163044.0Z
+createTimeStamp: 20121218163044.0Z
+modifyTimeStamp: 20121218163324.0Z
+structuralObjectClass: top
+structuralObjectClass: server
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
+dn: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configurat
+ ion,DC=adsync4j,DC=org
+objectClass: top
+objectClass: applicationSettings
+objectClass: nTDSDSA
+instanceType: 4
+objectCategory: CN=NTDS-DSA,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+cn: NTDS Settings
+distinguishedName: CN=NTDS Settings,CN=WIN-C6SAQM0CG0F,CN=Servers,CN=Default-First-Site-Name,CN=Site
+ s,CN=Configuration,DC=adsync4j,DC=org
+dMDLocation: CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+dSCorePropagationData: 20121218163259.0Z
+dSCorePropagationData: 16010101000004.0Z
+hasMasterNCs: CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+hasMasterNCs: CN=Configuration,DC=adsync4j,DC=org
+hasMasterNCs: DC=adsync4j,DC=org
+invocationId:: rMgzXjhQrU2+g6Z4lMw50g==
+msDS-Behavior-Version: 5
+msDS-HasDomainNCs: DC=adsync4j,DC=org
+msDS-HasInstantiatedNCs: B:8:0000000D:DC=ForestDnsZones,DC=adsync4j,DC=org
+msDS-HasInstantiatedNCs: B:8:0000000D:DC=DomainDnsZones,DC=adsync4j,DC=org
+msDS-HasInstantiatedNCs: B:8:0000000D:CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+msDS-HasInstantiatedNCs: B:8:0000000D:CN=Configuration,DC=adsync4j,DC=org
+msDS-HasInstantiatedNCs: B:8:00000005:DC=adsync4j,DC=org
+msDS-hasMasterNCs: DC=ForestDnsZones,DC=adsync4j,DC=org
+msDS-hasMasterNCs: DC=DomainDnsZones,DC=adsync4j,DC=org
+msDS-hasMasterNCs: CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+msDS-hasMasterNCs: CN=Configuration,DC=adsync4j,DC=org
+msDS-hasMasterNCs: DC=adsync4j,DC=org
+name: NTDS Settings
+objectGUID:: wyWB0WFqdki0cW7E6yJi6g==
+options: 1
+retiredReplDSASignatures:: AQAAAAAAAAACAAAAAAAAAMMlgdFhanZItHFuxOsiYuoB++QGAwAAAFlQAAAAAAAA6tIVKn4fK
+ Umz7ImBjmacY7l1dgcDAAAAd1IAAAAAAAA=
+serverReferenceBL: CN=WIN-C6SAQM0CG0F,CN=Topology,CN=Domain System Volume,CN=DFSR-GlobalSettings,CN=
+ System,DC=adsync4j,DC=org
+showInAdvancedViewOnly: TRUE
+systemFlags: 33554432
+uSNChanged: 21112
+uSNCreated: 5953
+whenChanged: 20130410221625.0Z
+whenCreated: 20121218163044.0Z
+createTimeStamp: 20121218163044.0Z
+modifyTimeStamp: 20130410221625.0Z
+structuralObjectClass: top
+structuralObjectClass: applicationSettings
+structuralObjectClass: nTDSDSA
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org

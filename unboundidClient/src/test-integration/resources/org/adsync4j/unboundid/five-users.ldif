@@ -1,0 +1,54 @@
+dn: dc=example,dc=com
+objectClass: domain
+objectClass: top
+dc: example
+
+dn: ou=users,dc=example,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: cn=user1,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: user1
+sn: user1
+uid: user1
+# userPassword: user
+userPassword:: dXNlcg==
+
+dn: cn=user2,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: user2
+sn: user2
+uid: user2
+# userPassword: user
+userPassword:: dXNlcg==
+
+dn: cn=user3,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: user3
+sn: user3
+uid: user3
+# userPassword: user
+userPassword:: dXNlcg==
+
+dn: cn=user4,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: user4
+sn: user4
+uid: user4
+# userPassword: user
+userPassword:: dXNlcg==
+
+dn: cn=user5,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: top
+cn: user5
+sn: user5
+uid: user5
+# userPassword: user
+userPassword:: dXNlcg==

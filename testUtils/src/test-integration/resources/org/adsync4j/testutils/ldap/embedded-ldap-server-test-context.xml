@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+    <!-- testing if bean factory can process multiple ldif resources specified as list of ant path patterns -->
+    <bean class="org.adsync4j.testutils.ldap.EmbeddedLdapServerFactoryBean">
+        <property name="rootDN" value="DC=test,DC=com"/>
+        <property name="port" value="10389"/>
+        <property name="ldifs">
+            <list>
+                <value>classpath:org/adsync4j/testutils/ldap/data/*-container.ldif</value>
+                <value>classpath:org/adsync4j/testutils/ldap/data/*-instance.ldif</value>
+            </list>
+        </property>
+    </bean>
+
+</beans>

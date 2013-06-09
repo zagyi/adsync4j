@@ -1,0 +1,24 @@
+version: 1
+
+dn: ou=Users,dc=adsync4j,dc=org
+objectClass: top
+objectClass: organizationalUnit
+instanceType: 4
+objectCategory: CN=Organizational-Unit,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+ou: Users
+description: Data required by integration/acceptance tests for ADSync4J.
+distinguishedName: OU=Users,DC=adsync4j,DC=org
+dSCorePropagationData: 20130527155822.0Z
+dSCorePropagationData: 16010101000416.0Z
+name: Users
+objectGUID:: JgFHFOzmx0aP2tblerAayg==
+uSNChanged: 21193
+uSNCreated: 21191
+whenChanged: 20130527155822.0Z
+whenCreated: 20130527155821.0Z
+createTimeStamp: 20130527155821.0Z
+modifyTimeStamp: 20130527155822.0Z
+structuralObjectClass: top
+structuralObjectClass: organizationalUnit
+subSchemaSubEntry: CN=Aggregate,CN=Schema,CN=Configuration,DC=adsync4j,DC=org
+
