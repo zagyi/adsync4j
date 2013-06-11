@@ -18,7 +18,6 @@ import static org.adsync4j.gradle.GradleUtils.addDependencies
 Project testUtils = project
 
 testUtils.apply plugin: 'groovy'
-testUtils.apply plugin: 'maven'
 testUtils.apply from: "$testUtils.rootDir/gradle/configureIntegrationTestSourceSet.gradle"
 
 addDependencies(testUtils, [

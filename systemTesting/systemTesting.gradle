@@ -19,7 +19,6 @@ import static org.adsync4j.gradle.GradleUtils.addDependencies
 Project prj = project
 
 prj.apply plugin: 'groovy'
-prj.apply plugin: 'maven'
 
 def unboundidClient_noLdapSdk = prj.dependencies.create(Projects.unboundidClient) {
     ModuleDependency dependency ->

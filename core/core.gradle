@@ -22,7 +22,6 @@ core.apply plugin: 'maven'
 // determines the artifactId in the published .pom
 archivesBaseName = 'adsync4j-core'
 
-
 GradleUtils.addDependencies(core, [
         compile: [
                 Libs.guava,

@@ -127,14 +127,26 @@ Set extractPaths(ModuleLibrary ml) {
     }
 }
 
+// maven plugin is selectively applied in sub-projects, so we need to evaluate them before doing maven specific settings
+rootPrj.evaluationDependsOnChildren()
+
 rootPrj.subprojects.each { subPrj ->
     def java = subPrj.convention.getPlugin(JavaPluginConvention)
     java.sourceCompatibility = 1.7
     java.targetCompatibility = 1.7
 
     if (subPrj.plugins.hasPlugin('maven')) {
-        // the install task depends on the jar task by default, which won't trigger test execution
-        subPrj.task('install').dependsOn ':build'
+        // by default the install task depends on the jar task, which won't trigger test execution
+        subPrj.tasks['install'].dependsOn = [subPrj.tasks['build']]
+    }
+}
+
+// create install task in root project that depends on the install tasks of sub-projects where maven plugin is applied
+rootPrj.tasks.create('install') { Task install ->
+    rootPrj.subprojects.each { subPrj ->
+        if (subPrj.plugins.hasPlugin('maven')) {
+            install.dependsOn += subPrj.tasks['install']
+        }
     }
 }
 
