@@ -24,7 +24,7 @@ public interface DomainControllerAffiliation extends LdapConnectionDetails {
 
     /**
      * @return DN of the node designating the subtree which is the scope of the sync operations (e.g. {@code
-     *         DC=Users,DC=example,DC=com}).
+     *         CN=Users,DC=example,DC=com}).
      */
     String getSyncBaseDN();
 
