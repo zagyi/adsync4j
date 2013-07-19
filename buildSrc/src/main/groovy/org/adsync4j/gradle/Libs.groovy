@@ -56,7 +56,7 @@ class Libs {
     static def getGradle() {
         Preconditions.checkState(
                 gradle != null,
-                "${Libs.class.name}.gradle_api can only be accessed after invoking ${Libs.class.name}.init(Project)".toString())
+                "${Libs.class.name}.gradle can only be accessed after invoking ${Libs.class.name}.init(Project)".toString())
         gradle
     }
 

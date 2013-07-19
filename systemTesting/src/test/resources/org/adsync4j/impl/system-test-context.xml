@@ -54,8 +54,8 @@
             <property name="ldifs">
                 <list>
                     <value>classpath:/org/adsync4j/impl/data/rootDN.ldif</value>
-                    <value>/org/adsync4j/impl/data/deleted-objects-container.ldif</value>
-                    <value>/org/adsync4j/impl/data/deleted-users.ldif</value>
+                    <value>classpath:/org/adsync4j/impl/data/deleted-objects-container.ldif</value>
+                    <value>classpath:/org/adsync4j/impl/data/deleted-users.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/ds-service-dn.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/users-container.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/users.ldif</value>

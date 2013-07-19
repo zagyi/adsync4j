@@ -39,6 +39,6 @@ searchFilter = (&\
 searchDeletedObjectsFilter = (&\
 (objectClass=user)\
 (userAccountControl:1.2.840.113556.1.4.803:=512)\
-(lastKnownParent=OU=Users,DC=yourDomain,DC=com)\
+(lastKnownParent=CN=Users,DC=yourDomain,DC=com)\
 )
 
