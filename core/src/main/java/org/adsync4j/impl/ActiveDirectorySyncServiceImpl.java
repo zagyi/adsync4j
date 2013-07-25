@@ -185,13 +185,13 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
     }
 
     /**
-     * Retrieves the GUID that identifies the {@code Deleted Objects Container} by inspecting the root entry (pointed
-     * to by the {@link org.adsync4j.DomainControllerAffiliation#getRootDN()}). That entry is supposed to
-     * hold a number of values in it's {@code wellKnownObjects} attribute in the following format:
+     * Retrieves the GUID that identifies the {@code Deleted Objects Container} by inspecting the root entry
+     * ({@link org.adsync4j.DomainControllerAffiliation#getRootDN()}) which is supposed to hold a number of values in its
+     * {@code wellKnownObjects} attribute in the following format:
      * <p/>
      * {@code "B:32:18E2EA80684F11D2B9AA00C04F79F805:CN=<...>,DC=example,DC=com"}
      * <p/>
-     * The GUID this method looks for is in the 3rd field (considering ':' as field separator) of the record where {@code
+     * This method looks for the GUID in the 3rd field (considering ':' as field separator) of the record where {@code
      * CN=Deleted Objects}.
      *
      * @return The 3rd field of the record the 4th field of which starts with {@code "CN=Deleted Objects,"}
