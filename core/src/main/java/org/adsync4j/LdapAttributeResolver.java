@@ -17,17 +17,17 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public interface LdapAttributeResolver<T_ATTRIBUTE> {
+public interface LdapAttributeResolver<LDAP_ATTRIBUTE> {
 
     @Nullable
-    String getAsString(T_ATTRIBUTE attribute);
+    String getAsString(LDAP_ATTRIBUTE attribute);
 
     @Nullable
-    Long getAsLong(T_ATTRIBUTE attribute);
+    Long getAsLong(LDAP_ATTRIBUTE attribute);
 
     @Nullable
-    byte[] getAsByteArray(T_ATTRIBUTE attribute);
+    byte[] getAsByteArray(LDAP_ATTRIBUTE attribute);
 
     @Nonnull
-    List<String> getAsStringList(T_ATTRIBUTE attribute);
+    List<String> getAsStringList(LDAP_ATTRIBUTE attribute);
 }

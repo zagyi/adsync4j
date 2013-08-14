@@ -16,11 +16,11 @@ package org.adsync4j;
 import java.util.List;
 import java.util.UUID;
 
-public interface EntryProcessor<T_ATTRIBUTE> {
+public interface EntryProcessor<LDAP_ATTRIBUTE> {
 
-    void processNew(List<T_ATTRIBUTE> entry);
+    void processNew(List<LDAP_ATTRIBUTE> entry);
 
-    void processChanged(List<T_ATTRIBUTE> entry);
+    void processChanged(List<LDAP_ATTRIBUTE> entry);
 
     void processDeleted(UUID entryId);
 }
