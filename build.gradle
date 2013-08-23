@@ -151,7 +151,7 @@ rootPrj.tasks.create('install') { Task install ->
 }
 
 rootPrj.tasks.create(name: 'wrapper', type: Wrapper) { Wrapper wrapper ->
-    wrapper.gradleVersion = '1.6'
+    wrapper.gradleVersion = '1.7'
 }
 
 def userGradleScript = rootPrj.file("gradle/userScripts/${System.getProperty("user.name")}.gradle")
