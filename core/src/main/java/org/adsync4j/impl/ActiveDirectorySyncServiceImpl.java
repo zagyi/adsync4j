@@ -37,7 +37,6 @@ public class ActiveDirectorySyncServiceImpl<LDAP_ATTRIBUTE> implements ActiveDir
     protected final LdapClient<LDAP_ATTRIBUTE> _ldapClient;
     protected final DomainControllerAffiliation _dcAffiliation;
 
-    protected final List<String> _incrementalSyncAttributes;
     protected final LdapAttributeResolver<LDAP_ATTRIBUTE> _attributeResolver;
 
     protected enum ActiveDirectoryAttribute {
@@ -70,11 +69,6 @@ public class ActiveDirectorySyncServiceImpl<LDAP_ATTRIBUTE> implements ActiveDir
         _dcAffiliation = new ImmutableDomainControllerAffiliation(affiliation);
         _ldapClient = ldapClient;
         _attributeResolver = _ldapClient.getAttributeResolver();
-
-        _incrementalSyncAttributes = ImmutableList.<String>builder()
-                                                  .add(USN_CREATED.key())
-                                                  .addAll(affiliation.getAttributesToSync())
-                                                  .build();
     }
 
     @Override
@@ -115,8 +109,9 @@ public class ActiveDirectorySyncServiceImpl<LDAP_ATTRIBUTE> implements ActiveDir
             EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) throws LdapClientException
     {
         String filter = getFilterWithLowerAndUpperBoundUSN(_dcAffiliation.getSearchFilter(), upperBoundUSN);
-        Iterable<LDAP_ATTRIBUTE[]> searchResult = _ldapClient.search(
-                _dcAffiliation.getSyncBaseDN(), filter, _incrementalSyncAttributes);
+        Iterable<String> attributes = concat(asList(USN_CREATED.key()), _dcAffiliation.getAttributesToSync());
+
+        Iterable<LDAP_ATTRIBUTE[]> searchResult = _ldapClient.search(_dcAffiliation.getSyncBaseDN(), filter, attributes);
 
         for (LDAP_ATTRIBUTE[] entry : searchResult) {
             feedEntryProcessor(entryProcessor, entry);
@@ -126,7 +121,7 @@ public class ActiveDirectorySyncServiceImpl<LDAP_ATTRIBUTE> implements ActiveDir
     }
 
     private void feedEntryProcessor(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, LDAP_ATTRIBUTE[] entry) {
-        List<LDAP_ATTRIBUTE> entryWithoutUsnCreatedAttribute = asList(entry).subList(1, _incrementalSyncAttributes.size());
+        List<LDAP_ATTRIBUTE> entryWithoutUsnCreatedAttribute = asList(entry).subList(1, entry.length);
         if (isNewEntry(entry)) {
             entryProcessor.processNew(entryWithoutUsnCreatedAttribute);
         } else {

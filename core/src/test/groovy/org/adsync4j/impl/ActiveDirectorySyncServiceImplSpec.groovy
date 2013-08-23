@@ -151,8 +151,12 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         1 * ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key()) >> spec.remoteHighestCommittedUSN
 
         then: 'invoke search for new/updated entries using the appropriate filter and attribute list'
-        1 * ldapClient.search(
-                spec.syncBaseDN, spec.incrementalSyncFilter, [USN_CREATED.key(), * spec.attributesToSync]) >> spec.searchResults
+        1 * ldapClient.search(* _) >> { searchBaseDN, filter, attributes ->
+            assert searchBaseDN == spec.syncBaseDN
+            assert filter == spec.incrementalSyncFilter
+            assert attributes as List == [USN_CREATED.key(), * spec.attributesToSync]
+            spec.searchResults
+        }
 
         and: 'submit mapped entries to be processed'
         1 * entryProcessor.processNew(spec.searchResultsWithOutUSNCreated[0] as List)

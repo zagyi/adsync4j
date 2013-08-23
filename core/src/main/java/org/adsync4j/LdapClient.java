@@ -14,7 +14,6 @@
 package org.adsync4j;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
 import java.util.UUID;
 
 public interface LdapClient<LDAP_ATTRIBUTE> {
@@ -30,7 +29,7 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
     LDAP_ATTRIBUTE getEntryAttribute(String entryDN, String attribute) throws LdapClientException;
 
     @Nonnull
-    Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, Collection<String> attributes) throws LdapClientException;
+    Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, Iterable<String> attributes) throws LdapClientException;
 
     @Nonnull
     Iterable<UUID> searchDeleted(String deletedObjectsContainer, String filter) throws LdapClientException;
