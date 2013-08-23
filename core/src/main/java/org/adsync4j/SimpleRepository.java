@@ -13,9 +13,7 @@
  ******************************************************************************/
 package org.adsync4j;
 
-public interface ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
-
-    long fullSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) throws LdapClientException;
-
-    long incrementalSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) throws LdapClientException;
+public interface SimpleRepository<KEY, VALUE> {
+    VALUE load(KEY key);
+    VALUE save(VALUE dca);
 }
