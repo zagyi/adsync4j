@@ -12,7 +12,6 @@
  *     Balazs Zagyvai
  ***************************************************************************** */
 package org.adsync4j.impl
-
 import com.unboundid.ldap.sdk.Attribute
 import org.adsync4j.EntryProcessor
 import org.springframework.beans.factory.annotation.Autowired
@@ -72,8 +71,11 @@ class ActiveDirectorySyncServiceImplSystemSpec extends Specification {
     }
 
     def 'should allow to do incremental sync'() {
+        given:
+        adService.reloadAffiliation()
+
         expect:
-        adService.isIncrementalSyncPossible()
+        adService.assertIncrementalSyncIsPossible()
     }
 
     def 'testing incremental sync'() {

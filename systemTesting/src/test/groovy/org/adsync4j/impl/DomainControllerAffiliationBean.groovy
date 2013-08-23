@@ -30,4 +30,10 @@ class DomainControllerAffiliationBean implements DomainControllerAffiliation {
     List<String> attributesToSync
     String searchFilter
     String searchDeletedObjectsFilter
+
+    @Override
+    void setHighestCommittedUSN(Long hcusn) {
+        assert hcusn
+        highestCommittedUSN = hcusn
+    }
 }

@@ -13,10 +13,7 @@
  ******************************************************************************/
 package org.adsync4j.impl
 
-import org.adsync4j.DomainControllerAffiliation
-import org.adsync4j.EntryProcessor
-import org.adsync4j.LdapAttributeResolver
-import org.adsync4j.LdapClient
+import org.adsync4j.*
 import org.adsync4j.testutils.TestUtils
 import spock.lang.Specification
 
@@ -43,6 +40,17 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         and('a', 'b', 'c') == '(&(a)(b)(c))'
     }
 
+    def 'fail when DCA not found in repository'() {
+        given:
+        def service = new ActiveDirectorySyncServiceImpl('foo', Mock(SimpleRepository), Mock(LdapClient))
+
+        when:
+        service.incrementalSync(null)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
     def 'prevent incremental sync if no local InvocationId is stored'() {
         given:
         spec.with {
@@ -51,8 +59,12 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
 
         ActiveDirectorySyncServiceImpl service = buildService(spec)
 
-        expect:
-        !service.isIncrementalSyncPossible()
+        when:
+        service.incrementalSync(null)
+
+        then:
+        interaction { highestCommittedUSNIsRetrieved() }
+        thrown InitialFullSyncRequiredException
     }
 
     def 'prevent incremental sync if no local Highest Committed USN is stored'() {
@@ -63,8 +75,12 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
 
         ActiveDirectorySyncServiceImpl service = buildService(spec)
 
-        expect:
-        !service.isIncrementalSyncPossible()
+        when:
+        service.incrementalSync(null)
+
+        then:
+        interaction { highestCommittedUSNIsRetrieved() }
+        thrown InitialFullSyncRequiredException
     }
 
     def 'prevent incremental sync if local InvocationId does not match the remote one'() {
@@ -76,14 +92,14 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         ActiveDirectorySyncServiceImpl service = buildService(spec)
 
         when:
-        def isIncrementalSyncPossible = service.isIncrementalSyncPossible()
+        service.incrementalSync(null)
 
         then:
-        !isIncrementalSyncPossible
-
         interaction {
+            highestCommittedUSNIsRetrieved()
             invocationIdIsRetrieved()
         }
+        thrown InvocationIdMismatchException
     }
 
     def 'allow incremental sync if local InvocationId matches the remote one'() {
@@ -91,27 +107,18 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         // local and remote invocationIds are the same by default in the spec
         ActiveDirectorySyncServiceImpl service = buildService(spec)
 
-        when:
-        def isIncrementalSyncPossible = service.isIncrementalSyncPossible()
-
-        then:
-        isIncrementalSyncPossible
-
-        interaction {
-            invocationIdIsRetrieved()
-        }
-    }
-
-    def invocationIdIsRetrieved() {
-        String dsServiceDn = 'dsServiceDN'
-        1 * ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key()) >> dsServiceDn
-        1 * ldapClient.getEntryAttribute(dsServiceDn, INVOCATION_ID.key()) >> spec.remoteInvocationId
+        expect:
+        interaction { invocationIdIsRetrieved() }
+        service.assertIncrementalSyncIsPossible()
     }
 
     def 'full synchronization'() {
         given:
         spec.with {
             numOfNewEntriesOnServer = 2
+            // emulate the first full sync when the below details are missing
+            localInvocationId = null
+            localHighestCommittedUSN = null
         }
 
         ActiveDirectorySyncServiceImpl service = buildService(spec)
@@ -120,7 +127,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         def newLocalHighestCommittedUSN = service.fullSync(entryProcessor)
 
         then: 'retrieve the remote highestCommittedUSN to include it in the search filter'
-        1 * ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key()) >> spec.remoteHighestCommittedUSN
+        interaction { highestCommittedUSNIsRetrieved() }
 
         then: 'invoke search with the appropriate filter'
         1 * ldapClient.search(spec.syncBaseDN, spec.fullSyncFilter, spec.attributesToSync) >> spec.searchResults
@@ -129,8 +136,15 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         1 * entryProcessor.processNew(spec.searchResults[0])
         1 * entryProcessor.processNew(spec.searchResults[1])
 
+        then: 'retrieves the current invocation id'
+        interaction { invocationIdIsRetrieved() }
+
         and: 'assert that the caller gets the new highest committed USN'
-        spec.remoteHighestCommittedUSN == newLocalHighestCommittedUSN.toString()
+        newLocalHighestCommittedUSN.toString() == spec.remoteHighestCommittedUSN
+
+        and: 'assert that the affiliation record is updated with the invocation id and the highest committed USN'
+        spec.localHighestCommittedUSN == newLocalHighestCommittedUSN
+        spec.localInvocationId == spec.remoteInvocationId
     }
 
     def 'incremental synchronization'() {
@@ -148,7 +162,10 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         def newLocalHighestCommittedUSN = service.incrementalSync(entryProcessor)
 
         then: 'retrieve the remote highestCommittedUSN to include it in the search filter'
-        1 * ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key()) >> spec.remoteHighestCommittedUSN
+        interaction { highestCommittedUSNIsRetrieved() }
+
+        then: 'retrieves the current invocation id to check if incremental sync is possible'
+        interaction { invocationIdIsRetrieved() }
 
         then: 'invoke search for new/updated entries using the appropriate filter and attribute list'
         1 * ldapClient.search(* _) >> { searchBaseDN, filter, attributes ->
@@ -171,7 +188,20 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         1 * entryProcessor.processDeleted(spec.idOfDeletedObjects[1])
 
         and: 'assert that the caller gets the new highest committed USN'
-        spec.remoteHighestCommittedUSN == newLocalHighestCommittedUSN.toString()
+        newLocalHighestCommittedUSN.toString() == spec.remoteHighestCommittedUSN
+
+        and: 'assert that the affiliation record is updated with the highest committed USN'
+        spec.localHighestCommittedUSN == newLocalHighestCommittedUSN
+    }
+
+    def invocationIdIsRetrieved() {
+        String dsServiceDn = 'dsServiceDN'
+        1 * ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key()) >> dsServiceDn
+        1 * ldapClient.getEntryAttribute(dsServiceDn, INVOCATION_ID.key()) >> spec.remoteInvocationId
+    }
+
+    def highestCommittedUSNIsRetrieved() {
+        1 * ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key()) >> spec.remoteHighestCommittedUSN
     }
 
     /**
@@ -187,7 +217,15 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         0 * ldapClient._(* _)
         0 * entryProcessor._(* _)
 
-        new ActiveDirectorySyncServiceImpl(ldapClient, spec)
+        def affiliationRepository = [
+                load: { spec },
+                save: {}
+        ] as SimpleRepository
+
+        def service = new ActiveDirectorySyncServiceImpl('foo', affiliationRepository, ldapClient)
+        service._dcAffiliation = spec
+
+        service
     }
 
     /**
@@ -225,9 +263,21 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         String bindUser = 'bindUser'
         String bindPassword = 'bindPassword'
 
+        @Override
         UUID getInvocationId() { localInvocationId }
 
+        @Override
         Long getHighestCommittedUSN() { localHighestCommittedUSN }
+
+        @Override
+        void setInvocationId(UUID uuid) {
+            localInvocationId = uuid
+        }
+
+        @Override
+        void setHighestCommittedUSN(Long hcusn) {
+            localHighestCommittedUSN = hcusn
+        }
         // endregion
 
         enum EntryType {
@@ -281,8 +331,8 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
          */
         def getSearchResultsWithOutUSNCreated() {
             isUSNCreatedAttributeIncluded ?
-                searchResults.collect { it[1..-1] as List } :
-                searchResults
+                getSearchResults().collect { it[1..-1] as List } :
+                getSearchResults()
         }
 
         /**

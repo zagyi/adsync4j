@@ -4,11 +4,18 @@
        xmlns:c="http://www.springframework.org/schema/c"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       ">
 
-    <bean class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl"
-          c:ldapClient-ref="ldapClient"
-          c:affiliation-ref="dcAffiliation">
+    <bean id="dcaHolder" class="org.adsync4j.impl.DomainControllerAffiliationHolder"
+            c:dca-ref="dcAffiliation"/>
+
+    <bean id="adSyncService" class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl">
+        <constructor-arg name="dcaKey" value="foo"/>
+        <constructor-arg name="affiliationRepository" ref="dcaHolder"/>
+        <constructor-arg name="ldapClient" ref="ldapClient"/>
     </bean>
 
     <bean id="abstractDCAffiliation" class="org.adsync4j.impl.DomainControllerAffiliationBean" abstract="true"
@@ -26,9 +33,11 @@
     <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
           c:connectionFactory-ref="connectionFactory"/>
 
-    <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
-          c:ldapConnectionDetails-ref="dcAffiliation"
-          c:ldapConnectionOptions-ref="connectionOptions"/>
+    <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory">
+        <constructor-arg index="0" value="foo"/>
+        <constructor-arg index="1" ref="dcaHolder"/>
+        <constructor-arg index="2" ref="connectionOptions"/>
+    </bean>
 
     <bean id="connectionOptions" class="com.unboundid.ldap.sdk.LDAPConnectionOptions"
           p:connectTimeoutMillis="${connectTimeoutMillis}"/>
