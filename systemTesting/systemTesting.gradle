@@ -57,7 +57,7 @@ prj.tasks.create(name: 'testAgainstRealActiveDirectory', type: Test) { Test test
 prj.tasks['test'].configure { Test testTask ->
     def inMemoPropertiesFile
 
-    String  inMemoPropertiesLocationFromCLI = testTask.systemProperties['inMemoPropertiesLocation']
+    String inMemoPropertiesLocationFromCLI = testTask.systemProperties['inMemoPropertiesLocation']
 
     if (inMemoPropertiesLocationFromCLI) {
         inMemoPropertiesFile = new File(inMemoPropertiesLocationFromCLI)

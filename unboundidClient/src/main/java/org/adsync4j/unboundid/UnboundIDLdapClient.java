@@ -23,15 +23,12 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.collect.Iterables.toArray;
 import static org.adsync4j.UUIDUtils.bytesToUUID;
 
-public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttributeResolver<Attribute> {
+public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
     private final static XLogger LOG = XLoggerFactory.getXLogger(UnboundIDLdapClient.class);
 
@@ -157,27 +154,6 @@ public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttribute
     @Nonnull
     @Override
     public LdapAttributeResolver<Attribute> getAttributeResolver() {
-        return this;
-    }
-
-    @Override
-    public String getAsString(Attribute attribute) {
-        return attribute.getValue();
-    }
-
-    @Override
-    public Long getAsLong(Attribute attribute) {
-        return attribute.getValueAsLong();
-    }
-
-    @Override
-    public byte[] getAsByteArray(Attribute attribute) {
-        return attribute.getValueByteArray();
-    }
-
-    @Nonnull
-    @Override
-    public List<String> getAsStringList(Attribute attribute) {
-        return Arrays.asList(attribute.getValues());
+        return UnboundIdAttributeResolver.INSTANCE;
     }
 }

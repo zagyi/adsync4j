@@ -181,9 +181,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
                 usnCreated > _dcAffiliation.getHighestCommittedUSN();
     }
 
-    protected void queryDeletedEntries(
-            EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) throws LdapClientException
-    {
+    protected void queryDeletedEntries(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) {
         String idOfDeletedObjectContainer = retrieveIdOfDeletedObjectContainer();
 
         String deletedObjectsContainer = String.format(
@@ -198,7 +196,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
         }
     }
 
-    protected UUID retrieveInvocationId() throws LdapClientException {
+    protected UUID retrieveInvocationId() {
         LDAP_ATTRIBUTE dsServiceDNAttribute = _ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key());
         String dsServiceDN = _attributeResolver.getAsString(dsServiceDNAttribute);
 
@@ -214,7 +212,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
         return invocationId;
     }
 
-    protected long retrieveRemoteHighestCommittedUSN() throws LdapClientException {
+    protected long retrieveRemoteHighestCommittedUSN() {
         LDAP_ATTRIBUTE hcusnAttribute = _ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key());
         Long hcusn = _attributeResolver.getAsLong(hcusnAttribute);
         LdapClientException.throwIfNull(hcusn,
@@ -236,7 +234,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
      * @return The 3rd field of the record the 4th field of which starts with {@code "CN=Deleted Objects,"}
      *         (the record is split into fields on the ':' character).
      */
-    protected String retrieveIdOfDeletedObjectContainer() throws LdapClientException {
+    protected String retrieveIdOfDeletedObjectContainer() {
         LDAP_ATTRIBUTE wellKnownObjectsAttribute =
                 _ldapClient.getEntryAttribute(_dcAffiliation.getRootDN(), WELL_KNOWN_OBJECTS.key());
 
@@ -280,9 +278,5 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
                     .append(filter)
                     .append(')');
         }
-    }
-
-    public LdapAttributeResolver<LDAP_ATTRIBUTE> getAttributeResolver() {
-        return _attributeResolver;
     }
 }
