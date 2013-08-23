@@ -13,14 +13,7 @@
  ******************************************************************************/
 package org.adsync4j;
 
-import java.util.List;
-import java.util.UUID;
-
-public interface EntryProcessor<LDAP_ATTRIBUTE> {
-
-    void processNew(List<LDAP_ATTRIBUTE> entry);
-
-    void processChanged(List<LDAP_ATTRIBUTE> entry);
-
-    void processDeleted(UUID entryId);
+public interface SimpleRepository<KEY, VALUE> {
+    VALUE load(KEY key);
+    VALUE save(VALUE dca);
 }

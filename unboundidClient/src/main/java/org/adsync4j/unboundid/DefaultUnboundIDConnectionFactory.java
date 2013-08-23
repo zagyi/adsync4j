@@ -13,21 +13,23 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid;
 
-import com.google.common.base.Preconditions;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.adsync4j.LdapClientException;
 import org.adsync4j.LdapConnectionDetails;
+import org.adsync4j.SimpleRepository;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Default connection factory that creates an unsecured connection with the given user and password.
  */
 @NotThreadSafe
-public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnectionFactory {
+public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDConnectionFactory {
 
     @Nullable
     private final LDAPConnectionOptions _ldapConnectionOptions;
@@ -35,14 +37,18 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
 
     private PagingLdapConnection _connection;
 
-    public DefaultUnboundIDConnectionFactory(LdapConnectionDetails _ldapConnectionDetails) {
-        this(_ldapConnectionDetails, null);
+    public DefaultUnboundIDConnectionFactory(
+            KEY key, SimpleRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository)
+    {
+        this(key, ldapConnectionDetailsRepository, null);
     }
 
     public DefaultUnboundIDConnectionFactory(
-            LdapConnectionDetails ldapConnectionDetails, @Nullable LDAPConnectionOptions ldapConnectionOptions)
+            KEY key,
+            SimpleRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository,
+            @Nullable LDAPConnectionOptions ldapConnectionOptions)
     {
-        _ldapConnectionDetails = ldapConnectionDetails;
+        _ldapConnectionDetails = ldapConnectionDetailsRepository.load(key);
         _ldapConnectionOptions = ldapConnectionOptions;
     }
 
@@ -55,8 +61,7 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
 
     private PagingLdapConnection createConnection() {
         try {
-
-            Preconditions.checkArgument("ldap".equals(_ldapConnectionDetails.getProtocol()),
+            checkArgument("ldap".equals(_ldapConnectionDetails.getProtocol()),
                     "This connection factory supports only the creation of unsecured ldap:// connections.");
             LDAPConnection connection = new LDAPConnection(_ldapConnectionOptions,
                     _ldapConnectionDetails.getHost(), _ldapConnectionDetails.getPort(),

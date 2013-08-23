@@ -18,10 +18,6 @@ import java.util.UUID;
 
 public interface DomainControllerAffiliation extends LdapConnectionDetails {
 
-    UUID getInvocationId();
-
-    Long getHighestCommittedUSN();
-
     /**
      * @return DN of the node designating the subtree which is the scope of the sync operations (e.g. {@code
      *         CN=Users,DC=example,DC=com}).
@@ -33,4 +29,12 @@ public interface DomainControllerAffiliation extends LdapConnectionDetails {
     String getSearchDeletedObjectsFilter();
 
     List<String> getAttributesToSync();
+
+    UUID getInvocationId();
+
+    Long getHighestCommittedUSN();
+
+    void setInvocationId(UUID uuid);
+
+    void setHighestCommittedUSN(Long hcusn);
 }

@@ -13,32 +13,39 @@
  *******************************************************************************/
 package org.adsync4j.impl;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.adsync4j.*;
 
-import java.util.Arrays;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.base.Objects.equal;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.concat;
+import static java.util.Arrays.asList;
 import static org.adsync4j.UUIDUtils.bytesToUUID;
 import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAttribute.*;
-import static java.util.Arrays.asList;
 
-//TODO: add logging statements
-public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirectorySyncService<T_ATTRIBUTE> {
+@NotThreadSafe
+public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
 
+    //TODO: add logging statements
     //private final static Logger LOG = LoggerFactory.getLogger(ActiveDirectorySyncServiceImpl.class);
 
     protected static final String DELETED_OBJECTS_PATTERN = ":CN=Deleted Objects,";
     protected static final String DELETED_OBJECTS_CONTAINER_FORMULA = "<WKGUID=%s,%s>";
 
-    protected final LdapClient<T_ATTRIBUTE> _ldapClient;
-    protected final DomainControllerAffiliation _dcAffiliation;
+    protected final DCA_KEY _dcaKey;
+    protected final SimpleRepository<DCA_KEY, DomainControllerAffiliation> _affiliationRepository;
+    protected final LdapClient<LDAP_ATTRIBUTE> _ldapClient;
+    protected final LdapAttributeResolver<LDAP_ATTRIBUTE> _attributeResolver;
 
-    protected final List<String> _incrementalSyncAttributes;
-    protected final LdapAttributeResolver<T_ATTRIBUTE> _attributeResolver;
+    protected DomainControllerAffiliation _dcAffiliation;
+
+    protected interface SyncOperation<LDAP_ATTRIBUTE> {
+        void execute(long remoteHighestCommittedUSN, EntryProcessor<LDAP_ATTRIBUTE> entryProcessor);
+    }
 
     protected enum ActiveDirectoryAttribute {
         WELL_KNOWN_OBJECTS("wellKnownObjects"),
@@ -64,69 +71,101 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
     }
 
     public ActiveDirectorySyncServiceImpl(
-            LdapClient<T_ATTRIBUTE> ldapClient,
-            DomainControllerAffiliation affiliation) throws LdapClientException
+            DCA_KEY dcaKey,
+            SimpleRepository<DCA_KEY, DomainControllerAffiliation> affiliationRepository,
+            LdapClient<LDAP_ATTRIBUTE> ldapClient)
+            throws LdapClientException
     {
-        _dcAffiliation = new ImmutableDomainControllerAffiliation(affiliation);
+        _dcaKey = dcaKey;
+        _affiliationRepository = affiliationRepository;
         _ldapClient = ldapClient;
         _attributeResolver = _ldapClient.getAttributeResolver();
-
-        _incrementalSyncAttributes = ImmutableList.<String>builder()
-                                                  .add(USN_CREATED.key())
-                                                  .addAll(affiliation.getAttributesToSync())
-                                                  .build();
     }
 
     @Override
-    public boolean isIncrementalSyncPossible() throws LdapClientException {
-        UUID expectedInvocationId = _dcAffiliation.getInvocationId();
-        Long lastSeenHighestCommittedUSN = _dcAffiliation.getHighestCommittedUSN();
-        if (expectedInvocationId == null || lastSeenHighestCommittedUSN == null) {
-            return false;
-        } else {
-            UUID actualInvocationId = retrieveInvocationId();
-            return equal(actualInvocationId, expectedInvocationId);
-        }
+    public long fullSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
+        return doSync(entryProcessor, new SyncOperation<LDAP_ATTRIBUTE>() {
+            @Override
+            public void execute(long remoteHighestCommittedUSN, EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
+                String filter = getFilterWithUpperBoundUSN(_dcAffiliation.getSearchFilter(), remoteHighestCommittedUSN);
+
+                Iterable<LDAP_ATTRIBUTE[]> searchResult = _ldapClient.search(
+                        _dcAffiliation.getSyncBaseDN(), filter, _dcAffiliation.getAttributesToSync());
+
+                for (LDAP_ATTRIBUTE[] entryAttributes : searchResult) {
+                    entryProcessor.processNew(asList(entryAttributes));
+                }
+
+                _dcAffiliation.setInvocationId(retrieveInvocationId());
+            }
+        });
     }
 
     @Override
-    public long fullSync(EntryProcessor<T_ATTRIBUTE> entryProcessor) throws LdapClientException {
+    public long incrementalSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
+        return doSync(entryProcessor, new SyncOperation<LDAP_ATTRIBUTE>() {
+            @Override
+            public void execute(long remoteHighestCommittedUSN, EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
+                assertIncrementalSyncIsPossible();
+                queryChangedAndNewEntries(entryProcessor, remoteHighestCommittedUSN);
+                queryDeletedEntries(entryProcessor, remoteHighestCommittedUSN);
+            }
+        });
+    }
+
+    /**
+     * Template method that implements a common frame of logic that has to be executed regardless of which specific sync
+     * operation (full or incremental) is actually performed.
+     *
+     * @param entryProcessor
+     * @param syncOperation
+     * @return
+     */
+    private long doSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, SyncOperation<LDAP_ATTRIBUTE> syncOperation) {
+        reloadAffiliation();
         long remoteHighestCommittedUSN = retrieveRemoteHighestCommittedUSN();
-        String filter = getFilterWithUpperBoundUSN(_dcAffiliation.getSearchFilter(), remoteHighestCommittedUSN);
-        Iterable<T_ATTRIBUTE[]> searchResult = _ldapClient.search(
-                _dcAffiliation.getSyncBaseDN(), filter, _dcAffiliation.getAttributesToSync());
 
-        for (T_ATTRIBUTE[] attributes : searchResult) {
-            entryProcessor.processNew(Arrays.asList(attributes));
-        }
+        syncOperation.execute(remoteHighestCommittedUSN, entryProcessor);
 
+        _dcAffiliation.setHighestCommittedUSN(remoteHighestCommittedUSN);
+        _affiliationRepository.save(_dcAffiliation);
         return remoteHighestCommittedUSN;
     }
 
-    @Override
-    public long incrementalSync(EntryProcessor<T_ATTRIBUTE> entryProcessor) throws LdapClientException {
-        long upperBoundUSN = retrieveRemoteHighestCommittedUSN();
-        queryChangedAndNewEntries(entryProcessor, upperBoundUSN);
-        queryDeletedEntries(entryProcessor, upperBoundUSN);
-        return upperBoundUSN;
+    void reloadAffiliation() {
+        _dcAffiliation = _affiliationRepository.load(_dcaKey);
+        checkArgument(_dcAffiliation != null,
+                "No Domain Controller Affiliation record is found in the repository with key: ", _dcaKey);
     }
 
-    protected long queryChangedAndNewEntries(
-            EntryProcessor<T_ATTRIBUTE> entryProcessor, long upperBoundUSN) throws LdapClientException
-    {
-        String filter = getFilterWithLowerAndUpperBoundUSN(_dcAffiliation.getSearchFilter(), upperBoundUSN);
-        Iterable<T_ATTRIBUTE[]> searchResult = _ldapClient.search(
-                _dcAffiliation.getSyncBaseDN(), filter, _incrementalSyncAttributes);
+    void assertIncrementalSyncIsPossible() {
+        UUID expectedInvocationId = _dcAffiliation.getInvocationId();
+        Long lastSeenHighestCommittedUSN = _dcAffiliation.getHighestCommittedUSN();
 
-        for (T_ATTRIBUTE[] entry : searchResult) {
-            feedEntryProcessor(entryProcessor, entry);
+        boolean isAnyAffiliationDetailMissing = expectedInvocationId == null || lastSeenHighestCommittedUSN == null;
+
+        if (isAnyAffiliationDetailMissing) {
+            throw new InitialFullSyncRequiredException();
         }
 
-        return upperBoundUSN;
+        if (!equal(expectedInvocationId, retrieveInvocationId())) {
+            throw new InvocationIdMismatchException();
+        }
     }
 
-    private void feedEntryProcessor(EntryProcessor<T_ATTRIBUTE> entryProcessor, T_ATTRIBUTE[] entry) {
-        List<T_ATTRIBUTE> entryWithoutUsnCreatedAttribute = asList(entry).subList(1, _incrementalSyncAttributes.size());
+    protected void queryChangedAndNewEntries(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) {
+        String filter = getFilterWithLowerAndUpperBoundUSN(_dcAffiliation.getSearchFilter(), upperBoundUSN);
+        Iterable<String> attributes = concat(asList(USN_CREATED.key()), _dcAffiliation.getAttributesToSync());
+
+        Iterable<LDAP_ATTRIBUTE[]> searchResult = _ldapClient.search(_dcAffiliation.getSyncBaseDN(), filter, attributes);
+
+        for (LDAP_ATTRIBUTE[] entry : searchResult) {
+            feedEntryProcessor(entryProcessor, entry);
+        }
+    }
+
+    private void feedEntryProcessor(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, LDAP_ATTRIBUTE[] entry) {
+        List<LDAP_ATTRIBUTE> entryWithoutUsnCreatedAttribute = asList(entry).subList(1, entry.length);
         if (isNewEntry(entry)) {
             entryProcessor.processNew(entryWithoutUsnCreatedAttribute);
         } else {
@@ -134,17 +173,15 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
         }
     }
 
-    private boolean isNewEntry(T_ATTRIBUTE[] entry) {
-        T_ATTRIBUTE usnCreatedAttribute = entry[0];
+    private boolean isNewEntry(LDAP_ATTRIBUTE[] entry) {
+        LDAP_ATTRIBUTE usnCreatedAttribute = entry[0];
         Long usnCreated = _attributeResolver.getAsLong(usnCreatedAttribute);
         return
                 usnCreated != null &&
                 usnCreated > _dcAffiliation.getHighestCommittedUSN();
     }
 
-    protected void queryDeletedEntries(
-            EntryProcessor<T_ATTRIBUTE> entryProcessor, long upperBoundUSN) throws LdapClientException
-    {
+    protected void queryDeletedEntries(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) {
         String idOfDeletedObjectContainer = retrieveIdOfDeletedObjectContainer();
 
         String deletedObjectsContainer = String.format(
@@ -159,14 +196,14 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
         }
     }
 
-    protected UUID retrieveInvocationId() throws LdapClientException {
-        T_ATTRIBUTE dsServiceDNAttribute = _ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key());
+    protected UUID retrieveInvocationId() {
+        LDAP_ATTRIBUTE dsServiceDNAttribute = _ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key());
         String dsServiceDN = _attributeResolver.getAsString(dsServiceDNAttribute);
 
         LdapClientException.throwIfNull(dsServiceDN,
                 "Invalid %s attribute encountered: %s", DS_SERVICE_NAME.key(), String.valueOf(dsServiceDNAttribute));
 
-        T_ATTRIBUTE invocationIdAttribute = _ldapClient.getEntryAttribute(dsServiceDN, INVOCATION_ID.key());
+        LDAP_ATTRIBUTE invocationIdAttribute = _ldapClient.getEntryAttribute(dsServiceDN, INVOCATION_ID.key());
 
         UUID invocationId = bytesToUUID(_attributeResolver.getAsByteArray(invocationIdAttribute));
         LdapClientException.throwIfNull(invocationId,
@@ -175,8 +212,8 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
         return invocationId;
     }
 
-    protected long retrieveRemoteHighestCommittedUSN() throws LdapClientException {
-        T_ATTRIBUTE hcusnAttribute = _ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key());
+    protected long retrieveRemoteHighestCommittedUSN() {
+        LDAP_ATTRIBUTE hcusnAttribute = _ldapClient.getRootDSEAttribute(HIGHEST_COMMITTED_USN.key());
         Long hcusn = _attributeResolver.getAsLong(hcusnAttribute);
         LdapClientException.throwIfNull(hcusn,
                 "Invalid Update Sequence Number encountered: %s.", String.valueOf(hcusnAttribute));
@@ -197,8 +234,8 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
      * @return The 3rd field of the record the 4th field of which starts with {@code "CN=Deleted Objects,"}
      *         (the record is split into fields on the ':' character).
      */
-    protected String retrieveIdOfDeletedObjectContainer() throws LdapClientException {
-        T_ATTRIBUTE wellKnownObjectsAttribute =
+    protected String retrieveIdOfDeletedObjectContainer() {
+        LDAP_ATTRIBUTE wellKnownObjectsAttribute =
                 _ldapClient.getEntryAttribute(_dcAffiliation.getRootDN(), WELL_KNOWN_OBJECTS.key());
 
         List<String> wellKnownObjects = _attributeResolver.getAsStringList(wellKnownObjectsAttribute);
@@ -241,9 +278,5 @@ public class ActiveDirectorySyncServiceImpl<T_ATTRIBUTE> implements ActiveDirect
                     .append(filter)
                     .append(')');
         }
-    }
-
-    public LdapAttributeResolver<T_ATTRIBUTE> getAttributeResolver() {
-        return _attributeResolver;
     }
 }

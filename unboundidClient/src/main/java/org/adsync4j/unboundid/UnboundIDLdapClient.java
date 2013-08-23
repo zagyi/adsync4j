@@ -23,15 +23,12 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static com.google.common.collect.Iterables.toArray;
 import static org.adsync4j.UUIDUtils.bytesToUUID;
 
-public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttributeResolver<Attribute> {
+public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
     private final static XLogger LOG = XLoggerFactory.getXLogger(UnboundIDLdapClient.class);
 
@@ -82,7 +79,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttribute
     @Nonnull
     @Override
     public Iterable<Attribute[]> search(
-            String searchBaseDN, String filter, Collection<String> attributes) throws LdapClientException
+            String searchBaseDN, String filter, Iterable<String> attributes) throws LdapClientException
     {
         try {
             String[] attributeArray = toArray(attributes, String.class);
@@ -95,14 +92,14 @@ public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttribute
 
             Iterable<SearchResultEntry> searchResult = _connectionFactory.getConnection().search(searchRequest, _pageSize);
 
-            return resultEntriesToAttributeArrays(searchResult, attributes);
+            return resultEntriesToAttributeArrays(searchResult, attributeArray);
         } catch (LDAPException e) {
             throw new LdapClientException(e);
         }
     }
 
     private Iterable<Attribute[]> resultEntriesToAttributeArrays(
-            Iterable<SearchResultEntry> searchResult, final Collection<String> attributes)
+            Iterable<SearchResultEntry> searchResult, final String[] attributes)
     {
         return Iterables.transform(searchResult,
                 new Function<SearchResultEntry, Attribute[]>() {
@@ -113,8 +110,8 @@ public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttribute
                 });
     }
 
-    private Attribute[] ensureAttributeOrder(SearchResultEntry resultEntry, Collection<String> attributes) {
-        Attribute[] result = new Attribute[attributes.size()];
+    private Attribute[] ensureAttributeOrder(SearchResultEntry resultEntry, String[] attributes) {
+        Attribute[] result = new Attribute[attributes.length];
         int i = 0;
         for (String attributeName : attributes) {
             Attribute attribute = resultEntry.getAttribute(attributeName);
@@ -157,27 +154,6 @@ public class UnboundIDLdapClient implements LdapClient<Attribute>, LdapAttribute
     @Nonnull
     @Override
     public LdapAttributeResolver<Attribute> getAttributeResolver() {
-        return this;
-    }
-
-    @Override
-    public String getAsString(Attribute attribute) {
-        return attribute.getValue();
-    }
-
-    @Override
-    public Long getAsLong(Attribute attribute) {
-        return attribute.getValueAsLong();
-    }
-
-    @Override
-    public byte[] getAsByteArray(Attribute attribute) {
-        return attribute.getValueByteArray();
-    }
-
-    @Nonnull
-    @Override
-    public List<String> getAsStringList(Attribute attribute) {
-        return Arrays.asList(attribute.getValues());
+        return UnboundIdAttributeResolver.INSTANCE;
     }
 }

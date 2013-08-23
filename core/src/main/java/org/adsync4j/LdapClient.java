@@ -14,29 +14,28 @@
 package org.adsync4j;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
 import java.util.UUID;
 
-public interface LdapClient<T_ATTRIBUTE> {
+public interface LdapClient<LDAP_ATTRIBUTE> {
 
     public static final int DEFAULT_PAGE_SIZE = 100;
     public static final String SHOW_DELETED_CONTROL_OID = "1.2.840.113556.1.4.417";
     public static final String OBJECT_GUID = "objectGUID";
 
     @Nonnull
-    T_ATTRIBUTE getRootDSEAttribute(String attributeName) throws LdapClientException;
+    LDAP_ATTRIBUTE getRootDSEAttribute(String attributeName) throws LdapClientException;
 
     @Nonnull
-    T_ATTRIBUTE getEntryAttribute(String entryDN, String attribute) throws LdapClientException;
+    LDAP_ATTRIBUTE getEntryAttribute(String entryDN, String attribute) throws LdapClientException;
 
     @Nonnull
-    Iterable<T_ATTRIBUTE[]> search(String searchBaseDN, String filter, Collection<String> attributes) throws LdapClientException;
+    Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, Iterable<String> attributes) throws LdapClientException;
 
     @Nonnull
     Iterable<UUID> searchDeleted(String deletedObjectsContainer, String filter) throws LdapClientException;
 
     @Nonnull
-    LdapAttributeResolver<T_ATTRIBUTE> getAttributeResolver();
+    LdapAttributeResolver<LDAP_ATTRIBUTE> getAttributeResolver();
 }
 
 

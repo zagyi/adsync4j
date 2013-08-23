@@ -13,11 +13,9 @@
  ******************************************************************************/
 package org.adsync4j;
 
-public interface ActiveDirectorySyncService<T_ATTRIBUTE> {
+public interface ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
 
-    boolean isIncrementalSyncPossible() throws LdapClientException;
+    long fullSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) throws LdapClientException;
 
-    long fullSync(EntryProcessor<T_ATTRIBUTE> entryProcessor) throws LdapClientException;
-
-    long incrementalSync(EntryProcessor<T_ATTRIBUTE> entryProcessor) throws LdapClientException;
+    long incrementalSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) throws LdapClientException;
 }
