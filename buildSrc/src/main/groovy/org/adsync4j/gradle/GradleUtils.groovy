@@ -13,6 +13,7 @@
  ***************************************************************************** */
 package org.adsync4j.gradle
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPluginConvention
 
 class GradleUtils {
     static def addDependencies(Project prj, Map dependencyMap) {
@@ -21,6 +22,12 @@ class GradleUtils {
                 prj.dependencies.add(configuration, dependencyNotation)
             }
         }
+    }
+
+    static JavaPluginConvention javaProperties(Project prj) {
+        JavaPluginConvention result = prj.convention.getPlugin(JavaPluginConvention)
+        assert result, "java plugin does not seem to be applied in project $prj"
+        result
     }
 
 //    static def reorderProjectResourcesBeforeExternalDependencies(FileCollection classPath, Project prj) {

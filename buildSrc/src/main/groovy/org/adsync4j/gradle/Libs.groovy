@@ -13,9 +13,6 @@
  ***************************************************************************** */
 package org.adsync4j.gradle
 
-import com.google.common.base.Preconditions
-import org.gradle.api.Project
-
 class Libs {
     static class Versions {
         static def groovy = '2.1.3'
@@ -30,7 +27,7 @@ class Libs {
         static def unboundid = '2.3.3'
     }
 
-    static def gradle
+    static def gradleJars = ['base-services', 'core', 'ide', 'build-setup', 'plugins', 'maven']
     static def groovy = "org.codehaus.groovy:groovy-all:${Versions.groovy}"
     static def guava = "com.google.guava:guava:${Versions.guava}"
     static def hamcrest = "org.hamcrest:hamcrest-library:${Versions.hamcrest}"
@@ -51,16 +48,4 @@ class Libs {
     static def slf4j(lib) { "org.slf4j:${lib}:${Versions.slf4j}" }
 
     static def spring(lib) { "org.springframework:spring-${lib}:${Versions.spring}" }
-
-    @SuppressWarnings("GroovyAssignabilityCheck")
-    static def getGradle() {
-        Preconditions.checkState(
-                gradle != null,
-                "${Libs.class.name}.gradle can only be accessed after invoking ${Libs.class.name}.init(Project)".toString())
-        gradle
-    }
-
-    static def init(Project prj) {
-        gradle = prj.fileTree("$prj.rootDir/gradle/jars/").include('gradle-*-1.6.jar')
-    }
 }
