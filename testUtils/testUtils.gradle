@@ -17,16 +17,15 @@ import static org.adsync4j.gradle.GradleUtils.addDependencies
 
 Project testUtils = project
 
-testUtils.apply plugin: 'groovy'
 testUtils.apply from: "$testUtils.rootDir/gradle/configureIntegrationTestSourceSet.gradle"
 
 addDependencies(testUtils, [
         compile: [
                 Libs.groovy,
                 Libs.guava,
-                Libs.jsr305_annotations,
-                Libs.slf4j_api,
-                Libs.spring_beans,
+                Libs.jsr305Annotations,
+                Libs.slf4jApi,
+                Libs.springBeans,
         ],
 
         provided: [
@@ -34,20 +33,20 @@ addDependencies(testUtils, [
         ],
 
         runtime: [
-                Libs.slf4j_bridge_jul,
+                Libs.slf4jBridgeJUL,
         ],
 
         integrationTestCompile: [
                 Libs.groovy,
                 Libs.hamcrest,
                 Libs.spock,
-                Libs.spring_context,
-                Libs.spring_test,
+                Libs.springContext,
+                Libs.springTest,
         ],
 
         integrationTestRuntime: [
-                Libs.spock_spring,
-                Libs.slf4j_bridge_jcl,
+                Libs.spockSpring,
+                Libs.slf4jBridgeJCL,
                 Libs.unboundid,
         ],
 ])

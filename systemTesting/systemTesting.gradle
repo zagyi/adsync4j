@@ -18,8 +18,6 @@ import static org.adsync4j.gradle.GradleUtils.addDependencies
 
 Project prj = project
 
-prj.apply plugin: 'groovy'
-
 def unboundidClient_noLdapSdk = prj.dependencies.create(Projects.unboundidClient) {
     ModuleDependency dependency ->
         dependency.exclude group: 'com.unboundid', module: 'unboundid-ldapsdk'
@@ -30,9 +28,9 @@ addDependencies(prj, [
                 Libs.groovy,
                 Libs.hamcrest,
                 Libs.spock,
-                Libs.spock_spring,
-                Libs.spring_test,
-                Libs.spring_context,
+                Libs.spockSpring,
+                Libs.springTest,
+                Libs.springContext,
                 Projects.core,
                 Projects.testUtils,
                 unboundidClient_noLdapSdk,
@@ -40,8 +38,8 @@ addDependencies(prj, [
         ],
 
         testRuntime: [
-                Libs.slf4j_bridge_jul,
-                Libs.slf4j_bridge_jcl,
+                Libs.slf4jBridgeJUL,
+                Libs.slf4jBridgeJCL,
         ],
 ])
 

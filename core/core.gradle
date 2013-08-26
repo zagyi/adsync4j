@@ -25,8 +25,8 @@ archivesBaseName = 'adsync4j-core'
 GradleUtils.addDependencies(core, [
         compile: [
                 Libs.guava,
-                Libs.jsr305_annotations,
-                Libs.slf4j_api,
+                Libs.jsr305Annotations,
+                Libs.slf4jApi,
         ],
 
         testCompile: [
