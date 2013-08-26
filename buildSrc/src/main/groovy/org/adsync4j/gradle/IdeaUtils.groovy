@@ -14,6 +14,9 @@
 package org.adsync4j.gradle
 
 import com.google.common.collect.Ordering
+import org.gradle.api.Project
+import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.plugins.ide.idea.model.Module
 import org.gradle.plugins.ide.idea.model.ModuleDependency
 import org.gradle.plugins.ide.idea.model.ModuleLibrary
 import org.gradle.plugins.ide.idea.model.SingleEntryModuleLibrary
@@ -49,6 +52,15 @@ class IdeaUtils {
             if (match) {
                 match[0][1]
             }
+        }
+    }
+
+    static def sortIdeaDependencies(Project prj) {
+        IdeaModel idea = prj.idea
+        idea.module.iml.whenMerged { Module module ->
+            def sortedDependencies = new TreeSet(IdeaUtils.dependenciesOrdering)
+            sortedDependencies.addAll(module.dependencies)
+            module.dependencies = sortedDependencies
         }
     }
 
