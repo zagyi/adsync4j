@@ -56,7 +56,7 @@ rootPrj.with {
     }
 }
 
-// set up projects that publish to maven repository
+// set up publishing to maven repository for selected projects
 [core, unboundidClient].each { mavenPrj ->
     mavenPrj.with {
         apply plugin: 'maven'

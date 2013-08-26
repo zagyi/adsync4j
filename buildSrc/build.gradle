@@ -31,11 +31,10 @@
  */
 
 Project buildSrc = project
-RepositoryHandler repo = buildSrc.repositories
 
 buildSrc.repositories.with {
-    add(repo.mavenLocal())
-    add(repo.mavenCentral())
+    add(mavenLocal())
+    add(mavenCentral())
 }
 
 buildSrc.dependencies.add('compile', 'com.google.guava:guava:14.0.1')

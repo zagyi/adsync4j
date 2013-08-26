@@ -5,7 +5,30 @@ import static org.adsync4j.gradle.Projects.systemTesting
 
 Project prj = project
 
-prj.evaluationDependsOn(systemTesting.path)
+// in order to have implicit tasks initialized in every project
+prj.rootProject.subprojects.each {
+    prj.evaluationDependsOn(it.path)
+}
+
+prj.rootProject.tasks.create('taskDirs') {
+    def tasksBaseDir = prj.rootProject.file('gradle/tasks')
+    tasksBaseDir.deleteDir()
+
+    prj.rootProject.allprojects.each {
+        def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
+
+        // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')
+        def allTasks = [* it.tasks.collect(), * (it as ProjectInternal).implicitTasks.collect()]
+
+        allTasks.each { Task task ->
+            new File(prjTaskBaseDir, task.name).mkdirs()
+        }
+    }
+}
+
+prj.rootProject.tasks['clean'].doLast {
+    prj.rootProject.file('gradle/tasks').deleteDir()
+}
 
 systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask ->
     def dir = '../unversioned/systemTest'
@@ -15,24 +38,4 @@ systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask 
             "-DadPropertiesLocation=file://$adPropertiesLocation",
             "-DexpectedEntriesFile=file://$expectedEntriesFile",
     ])
-}
-
-prj.rootProject.tasks.create('taskDirs') {
-    def tasksBaseDir = prj.rootProject.file('gradle/tasks')
-    tasksBaseDir.deleteDir()
-    prj.rootProject.allprojects.each {
-        def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
-        // normal tasks
-        it.tasks.each { task ->
-            new File(prjTaskBaseDir, task.name).mkdirs()
-        }
-        // implicit tasks (help tasks like dependency report, etc.)
-        (it as ProjectInternal).implicitTasks.each { task ->
-            new File(prjTaskBaseDir, task.name).mkdirs()
-        }
-    }
-}
-
-prj.rootProject.tasks['clean'].doLast {
-    prj.rootProject.file('gradle/tasks').deleteDir()
 }
