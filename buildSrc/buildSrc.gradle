@@ -33,19 +33,20 @@
 import org.adsync4j.gradle.Libs
 
 Project buildSrc = project
-RepositoryHandler repo = buildSrc.repositories
-String provided = 'provided'
-
-buildSrc.apply plugin: 'groovy'
-
-buildSrc.repositories {
-    repo.mavenLocal()
-    repo.mavenCentral()
-}
 
 buildSrc.dependencies.with {
-    add(provided, Libs.groovy)
-    add(provided, Libs.guava)
-    add(provided, Libs.slf4j_api)
-    add(provided, Libs.gradle)
+    add('provided', Libs.groovy)
+    add('provided', Libs.guava)
+    add('provided', Libs.slf4jApi)
+}
+
+// As this is a fake build script serving only the purpose that buildSrc appears as a normal module in IntelliJ IDEA,
+// we only need the tasks added by the idea plugin (that will create an idea module descriptor for buildSrc). Executing
+// any task other than the idea related ones is plain waste of time. For that reason we mute all unnecessary tasks here
+// (replace them with independent empty tasks).
+
+def nonIdeaPluginTasks = buildSrc.tasks.findAll { !it.name.toLowerCase().contains('idea') }
+
+nonIdeaPluginTasks.each {
+    buildSrc.tasks.create(overwrite: true, name: it.name).dependsOn = []
 }
