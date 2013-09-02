@@ -15,7 +15,6 @@ import org.adsync4j.gradle.Libs
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleUtils.addDependencies
-import static org.adsync4j.gradle.GroovyUtils.returnAfterClosure
 
 Project prj = project
 
@@ -55,87 +54,17 @@ prj.tasks.create(name: 'testAgainstRealActiveDirectory', type: Test) { Test test
 
 // normal test task performs system test against an in-memory ldap server that's mocking the behavior of a real Active Directory
 prj.tasks['test'].configure { Test testTask ->
-    def propertiesResolver = createPropertiesResolver(testTask)
-
-    def propertiesFileLocation = propertiesResolver.springConformPropertiesFileReference
-    def highestCommittedUSN = propertiesResolver['adRootDse.highestCommittedUSN']
-    def dsServiceName = propertiesResolver['adRootDse.dsServiceName']
-
-    def testJvmArgs = [
+    def propertiesFileLocation = getSpringConformPropertiesFileReference(testTask)
+    testTask.jvmArgs([
             '-Dspring.profiles.active=inMemoryLdapServer',
             "-DinMemoPropertiesLocation=$propertiesFileLocation",
-            "-DadRootDse.highestCommittedUSN=$highestCommittedUSN",
-            "-DadRootDse.dsServiceName=$dsServiceName",
-    ]
-
-    prj.logger.with {
-        debug('Invoking test executing JVM with the following additional system properties:')
-        testJvmArgs.each { debug(it) }
-    }
-
-    testTask.jvmArgs(testJvmArgs)
+    ])
 }
 
-static def createPropertiesResolver(Test testTask) {
+def getSpringConformPropertiesFileReference(Test testTask) {
     def userProvidedPropertiesFileLocation = testTask.systemProperties['inMemoPropertiesLocation']
+
     userProvidedPropertiesFileLocation ?
-        new UserProvidedPropertiesFileStrategy(userProvidedPropertiesFileLocation) :
-        new DefaultPropertiesFileStrategy(testTask.project)
-}
-
-abstract class InMemoryLdapServerPropertiesResolver {
-    @Lazy Properties properties = {
-        returnAfterClosure(new Properties()) { result ->
-            propertiesFile.withInputStream { stream -> result.load(stream) }
-        }
-    }()
-
-    abstract File getPropertiesFile()
-
-    abstract String getSpringConformPropertiesFileReference()
-
-    def getAt(String propertyName) {
-        returnAfterClosure(properties[propertyName]) { propertyValue ->
-            assert propertyValue, "property '$propertyName' not found in properties file: $springConformPropertiesFileReference"
-        }
-    }
-}
-
-class UserProvidedPropertiesFileStrategy extends InMemoryLdapServerPropertiesResolver {
-    final String userProvidedPropertiesFileLocation
-
-    UserProvidedPropertiesFileStrategy(userProvidedPropertiesFileLocation) {
-        this.userProvidedPropertiesFileLocation = userProvidedPropertiesFileLocation
-    }
-
-    @Override
-    File getPropertiesFile() {
-        def propertiesFile = new File(userProvidedPropertiesFileLocation)
-        assert propertiesFile.exists(), "Could not find file: $userProvidedPropertiesFileLocation"
-        propertiesFile
-    }
-
-    @Override
-    String getSpringConformPropertiesFileReference() {
-        "file://$userProvidedPropertiesFileLocation"
-    }
-}
-
-class DefaultPropertiesFileStrategy extends InMemoryLdapServerPropertiesResolver {
-    static final def DEFAULT_PROPERTIES_RESOURCE = 'org/adsync4j/impl/in-memory-ldap.properties'
-    final Project prj
-
-    public DefaultPropertiesFileStrategy(Project prj) {
-        this.prj = prj
-    }
-
-    @Override
-    File getPropertiesFile() {
-        prj.file("src/test/resources/$DEFAULT_PROPERTIES_RESOURCE")
-    }
-
-    @Override
-    String getSpringConformPropertiesFileReference() {
-        "classpath:/$DEFAULT_PROPERTIES_RESOURCE"
-    }
+        "file://$userProvidedPropertiesFileLocation" :
+        'classpath:/org/adsync4j/impl/in-memory-ldap.properties'
 }
