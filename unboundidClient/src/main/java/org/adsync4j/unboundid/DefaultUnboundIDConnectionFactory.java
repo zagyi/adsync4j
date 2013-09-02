@@ -31,9 +31,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 @NotThreadSafe
 public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDConnectionFactory {
 
-    @Nullable
-    private final LDAPConnectionOptions _ldapConnectionOptions;
-    private final LdapConnectionDetails _ldapConnectionDetails;
+    private final KEY _key;
+    private final SimpleRepository<KEY, ? extends LdapConnectionDetails> _ldapConnectionDetailsRepository;
+    @Nullable private final LDAPConnectionOptions _ldapConnectionOptions;
+
+    private LdapConnectionDetails _ldapConnectionDetails;
 
     private PagingLdapConnection _connection;
 
@@ -48,7 +50,8 @@ public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDCo
             SimpleRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository,
             @Nullable LDAPConnectionOptions ldapConnectionOptions)
     {
-        _ldapConnectionDetails = ldapConnectionDetailsRepository.load(key);
+        _key = key;
+        _ldapConnectionDetailsRepository = ldapConnectionDetailsRepository;
         _ldapConnectionOptions = ldapConnectionOptions;
     }
 
@@ -60,6 +63,8 @@ public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDCo
     }
 
     private PagingLdapConnection createConnection() {
+        _ldapConnectionDetails = _ldapConnectionDetailsRepository.load(_key);
+
         try {
             checkArgument("ldap".equals(_ldapConnectionDetails.getProtocol()),
                     "This connection factory supports only the creation of unsecured ldap:// connections.");

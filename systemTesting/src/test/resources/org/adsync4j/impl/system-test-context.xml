@@ -10,7 +10,7 @@
        ">
 
     <bean id="dcaHolder" class="org.adsync4j.impl.DomainControllerAffiliationHolder"
-            c:dca-ref="dcAffiliation"/>
+          c:dca-ref="dcAffiliation"/>
 
     <bean id="adSyncService" class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl">
         <constructor-arg name="dcaKey" value="foo"/>
@@ -73,6 +73,12 @@
             <property name="bindCredentials">
                 <map>
                     <entry key="${bindUser}" value="${bindPassword}"/>
+                </map>
+            </property>
+            <property name="rootDSEAttributes">
+                <map>
+                    <entry key="highestCommittedUSN" value="${adRootDse.highestCommittedUSN}"/>
+                    <entry key="dsServiceName" value="${adRootDse.dsServiceName}"/>
                 </map>
             </property>
         </bean>
