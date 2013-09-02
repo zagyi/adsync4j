@@ -75,6 +75,12 @@
                     <entry key="${bindUser}" value="${bindPassword}"/>
                 </map>
             </property>
+            <property name="rootDSEAttributes">
+                <map>
+                    <entry key="highestCommittedUSN" value="${adRootDse.highestCommittedUSN}"/>
+                    <entry key="dsServiceName" value="${adRootDse.dsServiceName}"/>
+                </map>
+            </property>
         </bean>
     </beans>
 </beans>
