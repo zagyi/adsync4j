@@ -10,7 +10,7 @@
        ">
 
     <bean id="dcaHolder" class="org.adsync4j.impl.DomainControllerAffiliationHolder"
-            c:dca-ref="dcAffiliation"/>
+          c:dca-ref="dcAffiliation"/>
 
     <bean id="adSyncService" class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl">
         <constructor-arg name="dcaKey" value="foo"/>
