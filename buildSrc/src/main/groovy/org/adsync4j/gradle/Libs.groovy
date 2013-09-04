@@ -24,7 +24,7 @@ class Libs {
         final static def slf4j = '1.7.5'
         final static def spock = '0.7-groovy-2.0'
         final static def spring = '3.2.2.RELEASE'
-        final static def unboundid = '2.3.3'
+        final static def unboundid = '2.3.4'
     }
 
     final static def gradleJars = ['base-services', 'core', 'ide', 'build-setup', 'plugins', 'maven']

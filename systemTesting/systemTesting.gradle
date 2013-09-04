@@ -15,6 +15,8 @@ import org.adsync4j.gradle.Libs
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleUtils.addDependencies
+import static org.adsync4j.gradle.GradleUtils.javaProperties
+import static org.adsync4j.gradle.UnboundIdSdkUnsealingHelper.obtainUnsealedUnboundIdSdk
 
 Project prj = project
 
@@ -22,6 +24,9 @@ def unboundidClient_noLdapSdk = prj.dependencies.create(Projects.unboundidClient
     ModuleDependency dependency ->
         dependency.exclude group: 'com.unboundid', module: 'unboundid-ldapsdk'
 }
+
+def unsealedUnboundIdSdk =
+    "${prj.rootProject.rootDir.absolutePath}/unversioned/unboundid-ldapsdk-${Libs.Versions.unboundid}-UNSEALED.jar"
 
 addDependencies(prj, [
         testCompile: [
@@ -34,7 +39,7 @@ addDependencies(prj, [
                 Projects.core,
                 Projects.testUtils,
                 unboundidClient_noLdapSdk,
-                prj.files("lib/unboundid-ldapsdk-2.3.3-nonsealed.jar"),
+                prj.files(unsealedUnboundIdSdk),
         ],
 
         testRuntime: [
@@ -67,4 +72,18 @@ def getSpringConformPropertiesFileReference(Test testTask) {
     userProvidedPropertiesFileLocation ?
         "file://$userProvidedPropertiesFileLocation" :
         'classpath:/org/adsync4j/impl/in-memory-ldap.properties'
+}
+
+Task ensureUnsealedUnboundIdSdk = prj.task('ensureUnsealedUnboundIdSdk') { Task task ->
+    task.doFirst {
+        if (!new File(unsealedUnboundIdSdk).exists()) {
+            obtainUnsealedUnboundIdSdk(prj, unsealedUnboundIdSdk)
+        }
+    }
+}
+
+prj.tasks['compileTestJava'].dependsOn(ensureUnsealedUnboundIdSdk)
+
+prj.tasks['clean'].doLast {
+    new File(unsealedUnboundIdSdk).delete()
 }
