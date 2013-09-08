@@ -32,10 +32,8 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
     Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, Iterable<String> attributes) throws LdapClientException;
 
     @Nonnull
-    Iterable<UUID> searchDeleted(String deletedObjectsContainer, String filter) throws LdapClientException;
+    Iterable<UUID> searchDeleted(String rootDN, String filter) throws LdapClientException;
 
     @Nonnull
     LdapAttributeResolver<LDAP_ATTRIBUTE> getAttributeResolver();
 }
-
-

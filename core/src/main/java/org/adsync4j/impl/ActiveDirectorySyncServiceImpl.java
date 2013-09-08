@@ -33,9 +33,6 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
     //TODO: add logging statements
     //private final static Logger LOG = LoggerFactory.getLogger(ActiveDirectorySyncServiceImpl.class);
 
-    protected static final String DELETED_OBJECTS_PATTERN = ":CN=Deleted Objects,";
-    protected static final String DELETED_OBJECTS_CONTAINER_FORMULA = "<WKGUID=%s,%s>";
-
     protected final DCA_KEY _dcaKey;
     protected final SimpleRepository<DCA_KEY, DomainControllerAffiliation> _affiliationRepository;
     protected final LdapClient<LDAP_ATTRIBUTE> _ldapClient;
@@ -183,14 +180,9 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
     }
 
     protected void queryDeletedEntries(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) {
-        String idOfDeletedObjectContainer = retrieveIdOfDeletedObjectContainer();
-
-        String deletedObjectsContainer = String.format(
-                DELETED_OBJECTS_CONTAINER_FORMULA, idOfDeletedObjectContainer, _dcAffiliation.getRootDN());
-
         String filter = getFilterWithLowerAndUpperBoundUSN(_dcAffiliation.getSearchDeletedObjectsFilter(), upperBoundUSN);
 
-        Iterable<UUID> deletedObjectIds = _ldapClient.searchDeleted(deletedObjectsContainer, filter);
+        Iterable<UUID> deletedObjectIds = _ldapClient.searchDeleted(_dcAffiliation.getRootDN(), filter);
 
         for (UUID uuid : deletedObjectIds) {
             entryProcessor.processDeleted(uuid);
@@ -220,33 +212,6 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
                 "Invalid Update Sequence Number encountered: %s.", String.valueOf(hcusnAttribute));
 //      noinspection ConstantConditions
         return hcusn;
-    }
-
-    /**
-     * Retrieves the GUID that identifies the {@code Deleted Objects Container} by inspecting the root entry
-     * ({@link org.adsync4j.DomainControllerAffiliation#getRootDN()}) which is supposed to hold a number of values in its
-     * {@code wellKnownObjects} attribute in the following format:
-     * <p/>
-     * {@code "B:32:18E2EA80684F11D2B9AA00C04F79F805:CN=<...>,DC=example,DC=com"}
-     * <p/>
-     * This method looks for the GUID in the 3rd field (considering ':' as field separator) of the record where {@code
-     * CN=Deleted Objects}.
-     *
-     * @return The 3rd field of the record the 4th field of which starts with {@code "CN=Deleted Objects,"}
-     *         (the record is split into fields on the ':' character).
-     */
-    protected String retrieveIdOfDeletedObjectContainer() {
-        LDAP_ATTRIBUTE wellKnownObjectsAttribute =
-                _ldapClient.getEntryAttribute(_dcAffiliation.getRootDN(), WELL_KNOWN_OBJECTS.key());
-
-        List<String> wellKnownObjects = _attributeResolver.getAsStringList(wellKnownObjectsAttribute);
-
-        for (String wellKnownObject : wellKnownObjects) {
-            if (wellKnownObject.contains(DELETED_OBJECTS_PATTERN)) {
-                return wellKnownObject.split(":")[2];
-            }
-        }
-        throw new LdapClientException("Could not determine the GUID of the Deleted Objects container.");
     }
 
     protected String getFilterWithLowerAndUpperBoundUSN(String filter, long upperBoundUSN) {

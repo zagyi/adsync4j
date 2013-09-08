@@ -122,9 +122,9 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
     @Nonnull
     @Override
-    public Iterable<UUID> searchDeleted(String deletedObjectsContainer, String filter) throws LdapClientException {
+    public Iterable<UUID> searchDeleted(String rootDN, String filter) throws LdapClientException {
         try {
-            SearchRequest searchRequest = new SearchRequest(deletedObjectsContainer, SearchScope.SUB, filter, OBJECT_GUID);
+            SearchRequest searchRequest = new SearchRequest(rootDN, SearchScope.SUB, filter, OBJECT_GUID);
             searchRequest.addControl(new Control(SHOW_DELETED_CONTROL_OID));
 
             Iterable<SearchResultEntry> searchResult = _connectionFactory.getConnection().search(searchRequest, _pageSize);

@@ -148,11 +148,11 @@ class UnboundIDLdapClientSpec extends Specification {
         SearchRequest capturedRequest
 
         when:
-        client.searchDeleted('DOC_ID', FILTER).collect()
+        client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         1 * connection.search({ capturedRequest = it }, PAGE_SIZE) >> []
-        capturedRequest.baseDN == 'DOC_ID'
+        capturedRequest.baseDN == BASE_DN
         capturedRequest.scope == SearchScope.SUB
         capturedRequest.filter.toString() == FILTER
         capturedRequest.attributes == [OBJECT_GUID]
@@ -169,7 +169,7 @@ class UnboundIDLdapClientSpec extends Specification {
         def entry = new SearchResultEntry('', [attribute])
 
         when:
-        def ids = client.searchDeleted('DOC_ID', FILTER).collect()
+        def ids = client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         1 * connection.search(* _) >> [entry]
@@ -183,7 +183,7 @@ class UnboundIDLdapClientSpec extends Specification {
         allowNoFurtherInteractions()
 
         when:
-        def ids = client.searchDeleted('DOC_ID', FILTER).collect()
+        def ids = client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         ids == [null]

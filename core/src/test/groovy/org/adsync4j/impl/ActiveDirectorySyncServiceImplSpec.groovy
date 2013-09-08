@@ -180,8 +180,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         1 * entryProcessor.processChanged(spec.searchResultsWithOutUSNCreated[1] as List)
 
         then: 'invoke search for deleted entries using the appropriate filter'
-        1 * ldapClient.getEntryAttribute(spec.rootDN, WELL_KNOWN_OBJECTS.key()) >> spec.wellKnownObjectValues
-        1 * ldapClient.searchDeleted(spec.deletedObjectsContainer, spec.filterForDeletedObjectsSearch) >> spec.idOfDeletedObjects
+        1 * ldapClient.searchDeleted(spec.rootDN, spec.filterForDeletedObjectsSearch) >> spec.idOfDeletedObjects
 
         then: 'submit the id of each deleted entry to be processed'
         1 * entryProcessor.processDeleted(spec.idOfDeletedObjects[0])
@@ -239,7 +238,6 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         UUID remoteInvocationId = COMMON_INVOCATION_ID
         Long localHighestCommittedUSN = 1111
         String remoteHighestCommittedUSN = 2222
-        def wellKnownObjectValues
         def numOfNewEntriesOnServer = 0
         def numOfUpdatedEntriesOnServer = 0
         def numOfDeletedEntriesOnServer = 0
@@ -290,7 +288,6 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
             fullSyncFilter = "(&(${searchFilter})(uSNChanged<=2222))".toString()
 
             def deletedObjectsContainerId = new UUID(0x1111222233334444, 0x5555666677778888)
-            wellKnownObjectValues = "foo:bar:${deletedObjectsContainerId}:CN=Deleted Objects,DC=foo,DC=bar".toString()
             deletedObjectsContainer = "<WKGUID=${deletedObjectsContainerId},$rootDN>".toString()
             idOfDeletedObjects = [
                     new UUID(0x1111111111111111, 0x1111111111111111),
