@@ -148,8 +148,9 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
             throw new InitialFullSyncRequiredException();
         }
 
-        if (!equal(expectedInvocationId, retrieveInvocationId())) {
-            throw new InvocationIdMismatchException();
+        UUID actualInvocationId = retrieveInvocationId();
+        if (!equal(expectedInvocationId, actualInvocationId)) {
+            throw new InvocationIdMismatchException(expectedInvocationId, actualInvocationId);
         }
     }
 
