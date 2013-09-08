@@ -21,16 +21,12 @@ import org.springframework.test.context.ContextConfiguration
 @ContextConfiguration(locations = '/org/adsync4j/impl/system-test-context.xml')
 class ActiveDirectorySyncServiceImplSystemSpec extends AbstractSystemSpec {
 
-    @Autowired
-    ActiveDirectorySyncServiceImpl adService
-
     static Set EXISTING_USERS
     static Set CHANGED_USERS
     static Set INSERTED_USERS
     static Set DELETED_USER_IDS
     static Set ALL_USERS
 
-    static final long LAST_KNOWN_HCUSN = 21303
     Set actualNewUsers = [] as Set
     Set actualChangedUsers = [] as Set
     Set actualDeletedUsers = [] as Set
@@ -38,6 +34,8 @@ class ActiveDirectorySyncServiceImplSystemSpec extends AbstractSystemSpec {
     @Autowired
     ActiveDirectorySyncServiceImpl adService
 
+    @Autowired
+    DomainControllerAffiliationBean dca
 
     EntryProcessor entryProcessor = [
             processNew: { actualNewUsers << attributesToString(it) },
@@ -66,22 +64,28 @@ class ActiveDirectorySyncServiceImplSystemSpec extends AbstractSystemSpec {
     }
 
     def 'testing incremental sync'() {
+        given:
+        def oldHCUSN = dca.highestCommittedUSN
+
         when:
         def newHCUSN = adService.incrementalSync(entryProcessor)
 
         then:
-        newHCUSN >= LAST_KNOWN_HCUSN
+        newHCUSN >= oldHCUSN
         actualNewUsers == INSERTED_USERS
         actualChangedUsers == CHANGED_USERS
         actualDeletedUsers == DELETED_USER_IDS
     }
 
     def 'testing full sync'() {
+        given:
+        def oldHCUSN = dca.highestCommittedUSN
+
         when:
         def newHCUSN = adService.fullSync(entryProcessor)
 
         then:
-        newHCUSN >= LAST_KNOWN_HCUSN
+        newHCUSN >= oldHCUSN
         actualNewUsers == ALL_USERS
         actualChangedUsers.isEmpty()
         actualDeletedUsers.isEmpty()
