@@ -15,7 +15,6 @@ import org.adsync4j.gradle.Libs
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleUtils.addDependencies
-import static org.adsync4j.gradle.GradleUtils.javaProperties
 import static org.adsync4j.gradle.UnboundIdSdkUnsealingHelper.obtainUnsealedUnboundIdSdk
 
 Project prj = project
@@ -48,30 +47,9 @@ addDependencies(prj, [
         ],
 ])
 
-//SourceSetContainer sourceSets = prj.sourceSets
-//def test = sourceSets['test']
-//test.compileClasspath = reorderProjectResourcesBeforeExternalFiles(test.compileClasspath, prj)
-//test.runtimeClasspath = reorderProjectResourcesBeforeExternalFiles(test.runtimeClasspath, prj)
-
-prj.tasks.create(name: 'testAgainstRealActiveDirectory', type: Test) { Test testTask ->
-    testTask.jvmArgs '-Dspring.profiles.active=realActiveDirectory'
-}
-
 // normal test task performs system test against an in-memory ldap server that's mocking the behavior of a real Active Directory
 prj.tasks['test'].configure { Test testTask ->
-    def propertiesFileLocation = getSpringConformPropertiesFileReference(testTask)
-    testTask.jvmArgs([
-            '-Dspring.profiles.active=inMemoryLdapServer',
-            "-DinMemoPropertiesLocation=$propertiesFileLocation",
-    ])
-}
-
-def getSpringConformPropertiesFileReference(Test testTask) {
-    def userProvidedPropertiesFileLocation = testTask.systemProperties['inMemoPropertiesLocation']
-
-    userProvidedPropertiesFileLocation ?
-        "file://$userProvidedPropertiesFileLocation" :
-        'classpath:/org/adsync4j/impl/in-memory-ldap.properties'
+    testTask.jvmArgs('-Dspring.profiles.active=inMemoryLdapServer')
 }
 
 Task ensureUnsealedUnboundIdSdk = prj.task('ensureUnsealedUnboundIdSdk') { Task task ->
@@ -87,3 +65,8 @@ prj.tasks['compileTestJava'].dependsOn(ensureUnsealedUnboundIdSdk)
 prj.tasks['clean'].doLast {
     new File(unsealedUnboundIdSdk).delete()
 }
+
+//SourceSetContainer sourceSets = prj.sourceSets
+//def test = sourceSets['test']
+//test.compileClasspath = reorderProjectResourcesBeforeExternalFiles(test.compileClasspath, prj)
+//test.runtimeClasspath = reorderProjectResourcesBeforeExternalFiles(test.runtimeClasspath, prj)

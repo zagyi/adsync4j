@@ -1,0 +1,26 @@
+existing = []
+
+changed = [
+    ['User1','CN=User1,OU=Users,DC=adsync4j,DC=org','user1@adsync4j.com']
+]
+
+inserted = [
+    ['User2','CN=User2,OU=Users,DC=adsync4j,DC=org','user2@adsync4j.org']
+]
+
+deleted = ['32e81845-cba3-4129-84de-b9f6d423c130']
+
+search {
+    email      = 'user1@adsync4j.com'
+    expectedDN = 'CN=User1,OU=Users,DC=adsync4j,DC=org'
+}
+
+dsServiceName =
+    'CN=NTDS Settings,' +
+    'CN=WIN-C6SAQM0CG0F,' +
+    'CN=Servers,' +
+    'CN=Default-First-Site-Name,' +
+    'CN=Sites,' +
+    'CN=Configuration,' +
+    'DC=adsync4j,' +
+    'DC=org'

@@ -51,7 +51,8 @@
     </beans>
 
     <beans profile="inMemoryLdapServer">
-        <context:property-placeholder location="${inMemoPropertiesLocation}"/>
+
+        <context:property-placeholder location="classpath:/org/adsync4j/impl/in-memory-ldap.properties"/>
 
         <bean id="dcAffiliation" parent="abstractDCAffiliation"
               p:host="localhost"

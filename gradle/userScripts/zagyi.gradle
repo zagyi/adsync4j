@@ -31,11 +31,10 @@ prj.rootProject.tasks['clean'].doLast {
 }
 
 systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask ->
-    def dir = '../unversioned/systemTest'
-    def adPropertiesLocation = systemTesting.file("$dir/active-directory.properties").absolutePath
-    def expectedEntriesFile = systemTesting.file("$dir/expectedEntries.groovycfg").absolutePath
+    def dir = "${prj.rootProject.rootDir.absolutePath}/unversioned/systemTest"
     testTask.jvmArgs([
-            "-DadPropertiesLocation=file://$adPropertiesLocation",
-            "-DexpectedEntriesFile=file://$expectedEntriesFile",
+            '-Dspring.profiles.active=realActiveDirectory',
+            "-DadPropertiesLocation=file://$dir/active-directory.properties",
+            "-DtestFixtures=file://$dir/testFixtures.groovycfg",
     ])
 }
