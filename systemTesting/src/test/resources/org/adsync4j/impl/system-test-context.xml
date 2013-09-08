@@ -30,9 +30,6 @@
           p:searchFilter="${searchFilter}"
           p:searchDeletedObjectsFilter="${searchDeletedObjectsFilter}"/>
 
-    <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
-          c:connectionFactory-ref="connectionFactory"/>
-
     <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory">
         <constructor-arg index="0" value="foo"/>
         <constructor-arg index="1" ref="dcaHolder"/>
@@ -43,6 +40,9 @@
           p:connectTimeoutMillis="${connectTimeoutMillis}"/>
 
     <beans profile="realActiveDirectory">
+        <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClient"
+              c:connectionFactory-ref="connectionFactory"/>
+
         <context:property-placeholder location="${adPropertiesLocation}"/>
 
         <bean id="dcAffiliation" parent="abstractDCAffiliation"
@@ -51,6 +51,8 @@
     </beans>
 
     <beans profile="inMemoryLdapServer">
+        <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
+              c:connectionFactory-ref="connectionFactory"/>
 
         <context:property-placeholder location="classpath:/org/adsync4j/impl/in-memory-ldap.properties"/>
 
