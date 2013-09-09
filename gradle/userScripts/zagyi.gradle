@@ -1,4 +1,3 @@
-import org.adsync4j.gradle.Projects
 import org.gradle.api.internal.project.ProjectInternal
 
 import static org.adsync4j.gradle.Projects.systemTesting
@@ -10,7 +9,22 @@ prj.rootProject.subprojects.each {
     prj.evaluationDependsOn(it.path)
 }
 
-prj.rootProject.tasks.create('taskDirs') {
+systemTesting.tasks.create(
+        description: 'Runs system tests against the real infrastructure.',
+        name: 'testAgainstRealActiveDirectory',
+        type: Test) { Test testTask ->
+    def dir = "${prj.rootProject.rootDir.absolutePath}/unversioned/systemTest"
+    testTask.jvmArgs([
+            '-Dspring.profiles.active=realActiveDirectory',
+            "-DadPropertiesLocation=file://$dir/active-directory.properties",
+            "-DtestFixtures=file://$dir/testFixtures.groovycfg",
+    ])
+}
+
+prj.rootProject.tasks.create(
+        description: 'Creates a directory structure corresponding to the projects\' existing tasks. ' +
+                'Useful to implement a poor man\'s shell completion for task names.',
+        name: 'taskDirs') { Task task ->
     def tasksBaseDir = prj.rootProject.file('gradle/tasks')
     tasksBaseDir.deleteDir()
 
@@ -20,22 +34,16 @@ prj.rootProject.tasks.create('taskDirs') {
         // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')
         def allTasks = [* it.tasks.collect(), * (it as ProjectInternal).implicitTasks.collect()]
 
-        allTasks.each { Task task ->
-            new File(prjTaskBaseDir, task.name).mkdirs()
+        allTasks.each { Task t ->
+            new File(prjTaskBaseDir, t.name).mkdirs()
         }
     }
 }
 
-prj.rootProject.tasks['clean'].doLast {
-    prj.rootProject.file('gradle/tasks').deleteDir()
-}
-
-systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask ->
-    def dir = '../unversioned/systemTest'
-    def adPropertiesLocation = systemTesting.file("$dir/active-directory.properties").absolutePath
-    def expectedEntriesFile = systemTesting.file("$dir/expectedEntries.groovycfg").absolutePath
-    testTask.jvmArgs([
-            "-DadPropertiesLocation=file://$adPropertiesLocation",
-            "-DexpectedEntriesFile=file://$expectedEntriesFile",
-    ])
+prj.rootProject.tasks.create(
+        description: 'Removes the task directory structure.',
+        name: 'cleanTaskDirs') { Task task ->
+    task.doLast {
+        prj.rootProject.file('gradle/tasks').deleteDir()
+    }
 }

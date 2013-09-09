@@ -20,6 +20,24 @@ import org.slf4j.LoggerFactory
 class TestUtils {
     private final static Logger LOG = LoggerFactory.getLogger(TestUtils)
 
+    /**
+     *
+     * @param resourceReference Reference to a resource either as a full-blown URL, or just classpath reference
+     *                          like "/com/package/resource.xml".
+     * @return A URL object pointing to the referenced resource.
+     */
+    static URL getResourceURL(def resourceReference) {
+        URL resource = getClass().getResource(resourceReference)
+
+        if (!resource) {
+            resource = new URL(resourceReference)
+        }
+
+        assert resource, "could not resolve $resourceReference to a classpath resource, and it doesn't seem to be a URL"
+
+        resource
+    }
+
     static InputStream getResourceAsStreamOrFail(resourceLocation) {
         def clazz
 
