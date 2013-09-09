@@ -11,8 +11,8 @@ inserted = [
 deleted = ['32e81845-cba3-4129-84de-b9f6d423c130']
 
 search {
-    email      = 'user1@adsync4j.com'
-    expectedDN = 'CN=User1,OU=Users,DC=adsync4j,DC=org'
+    filter      = 'mail=user1@adsync4j.com'
+    expectedDNs = ['CN=User1,OU=Users,DC=adsync4j,DC=org']
 }
 
 dsServiceName =
