@@ -62,8 +62,12 @@ Task ensureUnsealedUnboundIdSdk = prj.task('ensureUnsealedUnboundIdSdk') { Task 
 
 prj.tasks['compileTestJava'].dependsOn(ensureUnsealedUnboundIdSdk)
 
-prj.tasks['clean'].doLast {
-    new File(unsealedUnboundIdSdk).delete()
+prj.tasks.create(
+        description: 'Removes the downloaded and unsealed UnboundId LDAP SDK jar.',
+        name: 'cleanUnboundIdSDK') { Task task ->
+    task.doLast {
+        new File(unsealedUnboundIdSdk).delete()
+    }
 }
 
 //SourceSetContainer sourceSets = prj.sourceSets
