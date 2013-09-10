@@ -62,7 +62,7 @@ rootPrj.with {
         apply plugin: 'maven'
 
         // by default the install task depends on the jar task, which won't trigger test execution
-        tasks['install'].dependsOn = [tasks['build']]
+        tasks['install'].dependsOn(tasks['build'])
 
         def createSourcesJarTask =
             tasks.create(name: 'createSourcesJar', type: Jar) { Jar jarTask ->
@@ -71,7 +71,15 @@ rootPrj.with {
                 jarTask.from(mainSourceSet.allSource)
             }
 
+        def createJavadocJarTask =
+            tasks.create(name: 'createJavadocJar', type: Jar) { Jar jarTask ->
+                jarTask.dependsOn(tasks['javadoc'])
+                jarTask.classifier = 'javadoc'
+                jarTask.from('build/docs/javadoc')
+            }
+
         artifacts.add('archives', createSourcesJarTask)
+        artifacts.add('archives', createJavadocJarTask)
     }
 }
 
