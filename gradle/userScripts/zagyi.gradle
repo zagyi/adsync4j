@@ -25,25 +25,24 @@ prj.rootProject.tasks.create(
         description: 'Creates a directory structure corresponding to the projects\' existing tasks. ' +
                 'Useful to implement a poor man\'s shell completion for task names.',
         name: 'taskDirs') { Task task ->
-    def tasksBaseDir = prj.rootProject.file('gradle/tasks')
-    tasksBaseDir.deleteDir()
 
-    prj.rootProject.allprojects.each {
-        def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
+    def destination = 'gradle/tasks'
 
-        // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')
-        def allTasks = [* it.tasks.collect(), * (it as ProjectInternal).implicitTasks.collect()]
+    task.outputs.dir(destination)
 
-        allTasks.each { Task t ->
-            new File(prjTaskBaseDir, t.name).mkdirs()
-        }
-    }
-}
-
-prj.rootProject.tasks.create(
-        description: 'Removes the task directory structure.',
-        name: 'cleanTaskDirs') { Task task ->
     task.doLast {
-        prj.rootProject.file('gradle/tasks').deleteDir()
+        def tasksBaseDir = prj.rootProject.file(destination)
+        tasksBaseDir.deleteDir()
+
+        prj.rootProject.allprojects.each {
+            def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
+
+            // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')
+            def allTasks = [* it.tasks.collect(), * (it as ProjectInternal).implicitTasks.collect()]
+
+            allTasks.each { Task t ->
+                new File(prjTaskBaseDir, t.name).mkdirs()
+            }
+        }
     }
 }

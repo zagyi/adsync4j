@@ -24,7 +24,7 @@ def unboundidClient_noLdapSdk = prj.dependencies.create(Projects.unboundidClient
         dependency.exclude group: 'com.unboundid', module: 'unboundid-ldapsdk'
 }
 
-def unsealedUnboundIdSdk =
+def unsealedUnboundIdSdkLocation =
     "${prj.rootProject.rootDir.absolutePath}/unversioned/unboundid-ldapsdk-${Libs.Versions.unboundid}-UNSEALED.jar"
 
 addDependencies(prj, [
@@ -38,7 +38,7 @@ addDependencies(prj, [
                 Projects.core,
                 Projects.testUtils,
                 unboundidClient_noLdapSdk,
-                prj.files(unsealedUnboundIdSdk),
+                prj.files(unsealedUnboundIdSdkLocation),
         ],
 
         testRuntime: [
@@ -52,23 +52,24 @@ prj.tasks['test'].configure { Test testTask ->
     testTask.jvmArgs('-Dspring.profiles.active=inMemoryLdapServer')
 }
 
-Task ensureUnsealedUnboundIdSdk = prj.task('ensureUnsealedUnboundIdSdk') { Task task ->
+Task unsealedUnboundIdSdk = prj.task('unsealedUnboundIdSdk') { Task task ->
+    task.outputs.file(unsealedUnboundIdSdkLocation)
     task.doFirst {
-        if (!new File(unsealedUnboundIdSdk).exists()) {
-            obtainUnsealedUnboundIdSdk(prj, unsealedUnboundIdSdk)
+        if (!new File(unsealedUnboundIdSdkLocation).exists()) {
+            obtainUnsealedUnboundIdSdk(prj, unsealedUnboundIdSdkLocation)
         }
     }
 }
 
-prj.tasks['compileTestJava'].dependsOn(ensureUnsealedUnboundIdSdk)
+prj.tasks['compileTestJava'].dependsOn(unsealedUnboundIdSdk)
 
-prj.tasks.create(
-        description: 'Removes the downloaded and unsealed UnboundId LDAP SDK jar.',
-        name: 'cleanUnboundIdSDK') { Task task ->
-    task.doLast {
-        new File(unsealedUnboundIdSdk).delete()
-    }
-}
+//prj.tasks.create(
+//        description: 'Removes the downloaded and unsealed UnboundId LDAP SDK jar.',
+//        name: 'cleanUnboundIdSDK') { Task task ->
+//    task.doLast {
+//        new File(unsealedUnboundIdSdk).delete()
+//    }
+//}
 
 //SourceSetContainer sourceSets = prj.sourceSets
 //def test = sourceSets['test']
