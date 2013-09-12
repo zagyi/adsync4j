@@ -268,13 +268,15 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         Long getHighestCommittedUSN() { localHighestCommittedUSN }
 
         @Override
-        void setInvocationId(UUID uuid) {
+        DomainControllerAffiliation setInvocationId(UUID uuid) {
             localInvocationId = uuid
+            this
         }
 
         @Override
-        void setHighestCommittedUSN(Long hcusn) {
+        DomainControllerAffiliation setHighestCommittedUSN(Long hcusn) {
             localHighestCommittedUSN = hcusn
+            this
         }
         // endregion
 

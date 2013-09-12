@@ -34,7 +34,7 @@ public interface DomainControllerAffiliation extends LdapConnectionDetails {
 
     Long getHighestCommittedUSN();
 
-    void setInvocationId(UUID uuid);
+    DomainControllerAffiliation setInvocationId(UUID uuid);
 
-    void setHighestCommittedUSN(Long hcusn);
+    DomainControllerAffiliation setHighestCommittedUSN(Long hcusn);
 }

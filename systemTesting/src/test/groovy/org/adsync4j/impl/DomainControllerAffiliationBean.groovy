@@ -32,8 +32,16 @@ class DomainControllerAffiliationBean implements DomainControllerAffiliation {
     String searchDeletedObjectsFilter
 
     @Override
-    void setHighestCommittedUSN(Long hcusn) {
+    DomainControllerAffiliation setInvocationId(UUID id) {
+        assert id
+        invocationId = id
+        this
+    }
+
+    @Override
+    DomainControllerAffiliation setHighestCommittedUSN(Long hcusn) {
         assert hcusn
         highestCommittedUSN = hcusn
+        this
     }
 }
