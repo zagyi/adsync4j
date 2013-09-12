@@ -11,17 +11,25 @@
  * Contributors:
  *     Balazs Zagyvai
  ***************************************************************************** */
+
 import org.adsync4j.gradle.Projects
+import org.gradle.api.artifacts.maven.GroovyMavenDeployer
+import org.gradle.api.artifacts.maven.MavenDeployment
+import org.gradle.plugins.signing.SigningExtension
 
 import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDependency
-import static org.adsync4j.gradle.GradleUtils.javaProperties
+import static org.adsync4j.gradle.GradleUtils.*
 import static org.adsync4j.gradle.IdeaUtils.sortIdeaDependencies
-import static org.adsync4j.gradle.Projects.buildSrc
-import static org.adsync4j.gradle.Projects.core
-import static org.adsync4j.gradle.Projects.unboundidClient
+import static org.adsync4j.gradle.Projects.*
 
 Project rootPrj = project
 Projects.init(rootPrj)
+
+// run an optional user script to allow developers to add build logic that is
+// specific to their environment and that is executed before the main build script
+runUserScript(rootPrj, 'init')
+
+rootPrj.apply from: "$rootPrj.rootDir/gradle/pom.gradle"
 
 rootPrj.with {
     allprojects.each { prj ->
@@ -33,8 +41,8 @@ rootPrj.with {
             group = 'org.adsync4j'
             version = "0.1.1-SNAPSHOT"
 
-            javaProperties(prj).sourceCompatibility = 1.7
-            javaProperties(prj).targetCompatibility = 1.7
+            javaPlugin(prj).sourceCompatibility = 1.7
+            javaPlugin(prj).targetCompatibility = 1.7
 
             if (prj != buildSrc) {
                 prj.dependencies.add('provided', buildSrc)
@@ -60,19 +68,50 @@ rootPrj.with {
 [core, unboundidClient].each { mavenPrj ->
     mavenPrj.with {
         apply plugin: 'maven'
+        apply plugin: 'signing'
 
         // by default the install task depends on the jar task, which won't trigger test execution
-        tasks['install'].dependsOn = [tasks['build']]
+        tasks['install'].dependsOn(tasks['build'])
 
         def createSourcesJarTask =
             tasks.create(name: 'createSourcesJar', type: Jar) { Jar jarTask ->
                 jarTask.classifier = 'sources'
-                def mainSourceSet = javaProperties(mavenPrj).sourceSets['main']
+                def mainSourceSet = javaPlugin(mavenPrj).sourceSets['main']
                 jarTask.from(mainSourceSet.allSource)
             }
 
+        def createJavadocJarTask =
+            tasks.create(name: 'createJavadocJar', type: Jar) { Jar jarTask ->
+                jarTask.dependsOn(tasks['javadoc'])
+                jarTask.classifier = 'javadoc'
+                jarTask.from('build/docs/javadoc')
+            }
+
         artifacts.add('archives', createSourcesJarTask)
+        artifacts.add('archives', createJavadocJarTask)
+
+        GroovyMavenDeployer archivesDeployer = getMavenDeployerForConfiguration(mavenPrj, 'archives')
+
+        String userName = sonatypeUsername
+        String password = sonatypePassword
+        String repositoryUrl = isSnapshotVersion(mavenPrj) ?
+            ext(rootPrj, 'userLocalMavenRepository') :
+            'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+
+        configureRemoteRepository(archivesDeployer, repositoryUrl, userName, password)
+
+        // staticPomContent is declared in gradle/pom.gradle
+        archivesDeployer.pom(staticPomContent)
+
+        archivesDeployer.beforeDeployment { MavenDeployment deployment ->
+            SigningExtension signingExtension = extensions.getByType(SigningExtension)
+            signingExtension.signPom(deployment)
+        }
     }
+}
+
+boolean isSnapshotVersion(Project prj) {
+    (prj.version as String).endsWith('-SNAPSHOT')
 }
 
 def customizeTestTasks(Project prj) {
@@ -90,8 +129,6 @@ rootPrj.tasks.create(name: 'wrapper', type: Wrapper) { Wrapper wrapper ->
     wrapper.gradleVersion = '1.7'
 }
 
-// load an optional user script to let the user further customize the build process to his/her environment
-def userGradleScript = rootPrj.file("gradle/userScripts/${System.getProperty("user.name")}.gradle")
-if (userGradleScript.exists()) {
-    rootPrj.apply from: userGradleScript
-}
+// run an optional user script to allow developers to add build logic that is
+// specific to their environment and that is executed after the main build script
+runUserScript(rootPrj)
