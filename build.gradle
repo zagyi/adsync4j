@@ -14,6 +14,8 @@
 
 import org.adsync4j.gradle.Projects
 import org.gradle.api.artifacts.maven.GroovyMavenDeployer
+import org.gradle.api.artifacts.maven.MavenDeployment
+import org.gradle.plugins.signing.SigningExtension
 
 import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDependency
 import static org.adsync4j.gradle.GradleUtils.*
@@ -26,6 +28,8 @@ Projects.init(rootPrj)
 // run an optional user script to allow developers to add build logic that is
 // specific to their environment and that is executed before the main build script
 runUserScript(rootPrj, 'init')
+
+rootPrj.apply from: "$rootPrj.rootDir/gradle/pom.gradle"
 
 rootPrj.with {
     allprojects.each { prj ->
@@ -64,6 +68,7 @@ rootPrj.with {
 [core, unboundidClient].each { mavenPrj ->
     mavenPrj.with {
         apply plugin: 'maven'
+        apply plugin: 'signing'
 
         // by default the install task depends on the jar task, which won't trigger test execution
         tasks['install'].dependsOn(tasks['build'])
@@ -94,6 +99,14 @@ rootPrj.with {
             'https://oss.sonatype.org/service/local/staging/deploy/maven2'
 
         configureRemoteRepository(archivesDeployer, repositoryUrl, userName, password)
+
+        // staticPomContent is declared in gradle/pom.gradle
+        archivesDeployer.pom(staticPomContent)
+
+        archivesDeployer.beforeDeployment { MavenDeployment deployment ->
+            SigningExtension signingExtension = extensions.getByType(SigningExtension)
+            signingExtension.signPom(deployment)
+        }
     }
 }
 

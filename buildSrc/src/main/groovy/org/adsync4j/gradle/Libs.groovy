@@ -27,7 +27,7 @@ class Libs {
         final static def unboundid = '2.3.4'
     }
 
-    final static def gradleJars = ['base-services', 'core', 'ide', 'build-setup', 'plugins', 'maven']
+    final static def gradleJars = ['base-services', 'core', 'ide', 'build-setup', 'plugins', 'maven', 'signing']
     final static def groovy = "org.codehaus.groovy:groovy-all:${Versions.groovy}"
     final static def guava = "com.google.guava:guava:${Versions.guava}"
     final static def hamcrest = "org.hamcrest:hamcrest-library:${Versions.hamcrest}"
