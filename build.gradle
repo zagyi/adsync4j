@@ -13,6 +13,7 @@
  ***************************************************************************** */
 
 import org.adsync4j.gradle.Projects
+import org.gradle.api.artifacts.maven.GroovyMavenDeployer
 
 import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDependency
 import static org.adsync4j.gradle.GradleUtils.*
@@ -83,7 +84,21 @@ rootPrj.with {
 
         artifacts.add('archives', createSourcesJarTask)
         artifacts.add('archives', createJavadocJarTask)
+
+        GroovyMavenDeployer archivesDeployer = getMavenDeployerForConfiguration(mavenPrj, 'archives')
+
+        String userName = sonatypeUsername
+        String password = sonatypePassword
+        String repositoryUrl = isSnapshotVersion(mavenPrj) ?
+            ext(rootPrj, 'userLocalMavenRepository') :
+            'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+
+        configureRemoteRepository(archivesDeployer, repositoryUrl, userName, password)
     }
+}
+
+boolean isSnapshotVersion(Project prj) {
+    (prj.version as String).endsWith('-SNAPSHOT')
 }
 
 def customizeTestTasks(Project prj) {
