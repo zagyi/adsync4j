@@ -11,17 +11,20 @@
  * Contributors:
  *     Balazs Zagyvai
  ***************************************************************************** */
+
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDependency
-import static org.adsync4j.gradle.GradleUtils.javaProperties
+import static org.adsync4j.gradle.GradleUtils.*
 import static org.adsync4j.gradle.IdeaUtils.sortIdeaDependencies
-import static org.adsync4j.gradle.Projects.buildSrc
-import static org.adsync4j.gradle.Projects.core
-import static org.adsync4j.gradle.Projects.unboundidClient
+import static org.adsync4j.gradle.Projects.*
 
 Project rootPrj = project
 Projects.init(rootPrj)
+
+// run an optional user script to allow developers to add build logic that is
+// specific to their environment and that is executed before the main build script
+runUserScript(rootPrj, 'init')
 
 rootPrj.with {
     allprojects.each { prj ->
@@ -33,8 +36,8 @@ rootPrj.with {
             group = 'org.adsync4j'
             version = "0.1.1-SNAPSHOT"
 
-            javaProperties(prj).sourceCompatibility = 1.7
-            javaProperties(prj).targetCompatibility = 1.7
+            javaPlugin(prj).sourceCompatibility = 1.7
+            javaPlugin(prj).targetCompatibility = 1.7
 
             if (prj != buildSrc) {
                 prj.dependencies.add('provided', buildSrc)
@@ -67,7 +70,7 @@ rootPrj.with {
         def createSourcesJarTask =
             tasks.create(name: 'createSourcesJar', type: Jar) { Jar jarTask ->
                 jarTask.classifier = 'sources'
-                def mainSourceSet = javaProperties(mavenPrj).sourceSets['main']
+                def mainSourceSet = javaPlugin(mavenPrj).sourceSets['main']
                 jarTask.from(mainSourceSet.allSource)
             }
 
@@ -98,8 +101,6 @@ rootPrj.tasks.create(name: 'wrapper', type: Wrapper) { Wrapper wrapper ->
     wrapper.gradleVersion = '1.7'
 }
 
-// load an optional user script to let the user further customize the build process to his/her environment
-def userGradleScript = rootPrj.file("gradle/userScripts/${System.getProperty("user.name")}.gradle")
-if (userGradleScript.exists()) {
-    rootPrj.apply from: userGradleScript
-}
+// run an optional user script to allow developers to add build logic that is
+// specific to their environment and that is executed after the main build script
+runUserScript(rootPrj)

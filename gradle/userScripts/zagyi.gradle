@@ -4,16 +4,11 @@ import static org.adsync4j.gradle.Projects.systemTesting
 
 Project prj = project
 
-// in order to have implicit tasks initialized in every project
-prj.rootProject.subprojects.each {
-    prj.evaluationDependsOn(it.path)
-}
-
 systemTesting.tasks.create(
         description: 'Runs system tests against the real infrastructure.',
         name: 'testAgainstRealActiveDirectory',
         type: Test) { Test testTask ->
-    def dir = "${prj.rootProject.rootDir.absolutePath}/unversioned/systemTest"
+    def dir = "${prj.rootDir.absolutePath}/unversioned/systemTest"
     testTask.jvmArgs([
             '-Dspring.profiles.active=realActiveDirectory',
             "-DadPropertiesLocation=file://$dir/active-directory.properties",
@@ -21,7 +16,7 @@ systemTesting.tasks.create(
     ])
 }
 
-prj.rootProject.tasks.create(
+prj.tasks.create(
         description: 'Creates a directory structure corresponding to the projects\' existing tasks. ' +
                 'Useful to implement a poor man\'s shell completion for task names.',
         name: 'taskDirs') { Task task ->
@@ -31,10 +26,10 @@ prj.rootProject.tasks.create(
     task.outputs.dir(destination)
 
     task.doLast {
-        def tasksBaseDir = prj.rootProject.file(destination)
+        def tasksBaseDir = prj.file(destination)
         tasksBaseDir.deleteDir()
 
-        prj.rootProject.allprojects.each {
+        prj.allprojects.each {
             def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
 
             // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')

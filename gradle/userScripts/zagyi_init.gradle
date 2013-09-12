@@ -1,0 +1,5 @@
+import static org.adsync4j.gradle.GradleUtils.ext
+
+Project prj = project
+
+ext(prj, 'userLocalMavenRepository', 'http://localhost:8081/artifactory/libs-snapshot-local')

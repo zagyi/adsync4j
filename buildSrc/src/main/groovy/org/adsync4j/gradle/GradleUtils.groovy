@@ -16,6 +16,16 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginConvention
 
 class GradleUtils {
+    static def runUserScript(Project prj, String qualifier = '') {
+        // prepend an underscore to the qualifier
+        qualifier = qualifier ? "_$qualifier" : ''
+        def userScript = prj.file("gradle/userScripts/${System.getProperty("user.name")}${qualifier}.gradle")
+
+        if (userScript.exists()) {
+            prj.apply from: userScript
+        }
+    }
+
     static def addDependencies(Project prj, Map dependencyMap) {
         dependencyMap.each { String configuration, dependencies ->
             dependencies.each { dependencyNotation ->
@@ -24,10 +34,22 @@ class GradleUtils {
         }
     }
 
-    static JavaPluginConvention javaProperties(Project prj) {
-        JavaPluginConvention result = prj.convention.getPlugin(JavaPluginConvention)
-        assert result, "java plugin does not seem to be applied in project $prj"
-        result
+    static JavaPluginConvention javaPlugin(Project prj) {
+        prj.convention.getPlugin(JavaPluginConvention)
+    }
+
+    /**
+     * Same as reading an extension property from the project's ext "namespace" in Gradle DSL - without the black magic.
+     */
+    static def ext(Project prj, String name) {
+        prj.extensions.getExtraProperties().get(name)
+    }
+
+    /**
+     * Same as defining an extension property in the project's ext "namespace" in Gradle DSL - without the black magic.
+     */
+    static def ext(Project prj, String name, def value) {
+        prj.extensions.getExtraProperties().set(name, value)
     }
 
 //    static def reorderProjectResourcesBeforeExternalDependencies(FileCollection classPath, Project prj) {
