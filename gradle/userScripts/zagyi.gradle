@@ -1,5 +1,10 @@
+import org.adsync4j.gradle.Projects
+import org.gradle.api.artifacts.maven.GroovyMavenDeployer
+import org.gradle.api.artifacts.maven.MavenDeployment
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.plugins.signing.SigningExtension
 
+import static org.adsync4j.gradle.GradleUtils.*
 import static org.adsync4j.gradle.Projects.systemTesting
 
 Project prj = project
@@ -14,6 +19,31 @@ systemTesting.tasks.create(
             "-DadPropertiesLocation=file://$dir/active-directory.properties",
             "-DtestFixtures=file://$dir/testFixtures.groovycfg",
     ])
+}
+
+[Projects.core, Projects.unboundidClient].each { mavenPrj ->
+    // sonatype username and password is declared in ~/.gradle/gradle.properties in my environment
+    setupMavenPublishing(mavenPrj, sonatypeUsername, sonatypePassword)
+}
+
+def setupMavenPublishing(Project mavenPrj, String sonatypeUsername, String sonatypePassword) {
+    mavenPrj.apply plugin: 'signing'
+
+    GroovyMavenDeployer archivesDeployer = getMavenDeployerForConfiguration(mavenPrj, 'archives')
+
+    String repositoryUrl = isSnapshotVersion(mavenPrj) ?
+        ext(mavenPrj.rootProject, 'userLocalMavenRepository') :
+        'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+
+    configureRemoteRepository(archivesDeployer, repositoryUrl, sonatypeUsername, sonatypePassword)
+
+    // staticPomContent is declared in gradle/pom.gradle
+    archivesDeployer.pom(staticPomContent)
+
+    archivesDeployer.beforeDeployment { MavenDeployment deployment ->
+        SigningExtension signingExtension = mavenPrj.extensions.getByType(SigningExtension)
+        signingExtension.signPom(deployment)
+    }
 }
 
 prj.tasks.create(
