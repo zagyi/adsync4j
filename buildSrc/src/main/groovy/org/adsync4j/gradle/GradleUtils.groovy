@@ -21,7 +21,21 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.publication.maven.internal.DefaultMavenRepositoryHandlerConvention
 import org.gradle.api.tasks.Upload
 
+/**
+ * Miscellaneous helper methods, mostly required because we want to avoid using Gradle DSL. The methods here help to write
+ * build scripts that are as concise as possible without using dynamic constructs that prevent the IDE from providing proper
+ * support (e.g. code completion).
+ */
 class GradleUtils {
+
+    /**
+     *  Looks for a gradle script in the {@code gradle/userScripts} directory with the same name as the current (OS level) user,
+     *  and applies it in the specified project if found.
+     *  <p>
+     *  If the {@code qualifier} argument is specified it gets appended to
+     *  the script name. E.g. it looks for the script {@code gradle/userScripts/johnny_init.gradle} in case the user name
+     * {@code johnny} and the qualifier is {@code init}.
+     */
     static def runUserScript(Project prj, String qualifier = '') {
         // prepend an underscore to the qualifier
         qualifier = qualifier ? "_$qualifier" : ''
@@ -32,7 +46,13 @@ class GradleUtils {
         }
     }
 
-    static def addDependencies(Project prj, Map dependencyMap) {
+    /**
+     * Quick way for adding dependencies to a project.
+     *
+     * @param prj The project to add the dependencies to.
+     * @param dependencyMap A map that contains associations from a configuration name to a list of dependencies.
+     */
+    static def addDependencies(Project prj, Map<String, List<Object>> dependencyMap) {
         dependencyMap.each { String configuration, dependencies ->
             dependencies.each { dependencyNotation ->
                 prj.dependencies.add(configuration, dependencyNotation)
@@ -40,10 +60,21 @@ class GradleUtils {
         }
     }
 
+    /**
+     * @param prj
+     * @return The convention object that contains properties defined by the java plugin.
+     */
     static JavaPluginConvention javaPlugin(Project prj) {
         prj.convention.getPlugin(JavaPluginConvention)
     }
 
+    /**
+     *
+     * @param uploadTask
+     * @return The convention object that the maven plugin attaches to the repositories container of the {@code uploadTask}.
+     * Can be used to invoke {@link DefaultMavenRepositoryHandlerConvention#mavenDeployer} in order to add a remote
+     * maven repository where the upload task will deploy artifacts.
+     */
     static DefaultMavenRepositoryHandlerConvention mavenPlugin(Upload uploadTask) {
         new DslObject(uploadTask.repositories).convention.getPlugin(DefaultMavenRepositoryHandlerConvention)
     }
@@ -56,10 +87,12 @@ class GradleUtils {
      * This method takes a configuration name, looks up its corresponding upload task, and adds a maven repository to that
      * upload task. The added repository is of type {@link GroovyMavenDeployer}.
      * <p>
-     * Clients can call {@link #configureRemoteRepository} to set the maven repository's basic properties (url/username/pwd).
+     * The remote maven repository represented by the returned object can be configured in a follow-up call to
+     * {@link #configureRemoteRepository configureRemoteRepository()}.
      *
-     * @param prj The project to operate on.
-     * @param configuration A configuration which has associated artifacts to be deployed.
+     * @param prj
+     * @param configuration A configuration that has associated artifacts to be deployed (it's usually the 'archives'
+     *                      configuration).
      * @return A maven deployer that has been added to the repositories of the specified configuration's upload task.
      */
     static GroovyMavenDeployer getMavenDeployerForConfiguration(Project prj, String configuration) {
@@ -72,6 +105,15 @@ class GradleUtils {
         mavenPlugin(task).mavenDeployer()
     }
 
+    /**
+     * Sets the basic properties of the specified remote maven repository ({@link GroovyMavenDeployer}).
+     *
+     * @param mavenDeployer
+     * @param repositoryUrl
+     * @param userName
+     * @param password
+     * @return
+     */
     static def configureRemoteRepository(GroovyMavenDeployer mavenDeployer, String repositoryUrl, String userName, String password) {
         // Unfortunately it is impossible to create a remote repository in a sane way.
         // We are forced to use the dynamic method DefaultGroovyMavenDeployer.repository() which delegates

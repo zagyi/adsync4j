@@ -16,6 +16,10 @@ package org.adsync4j.gradle
 import org.gradle.api.Project
 import org.gradle.api.UnknownProjectException
 
+/**
+ * Class defining static references for each subproject. Must be initialized from outside, see {@link Projects#init(Project)
+ * init(Project)}.
+ */
 class Projects {
     public static Project core
     public static Project systemTesting
@@ -23,18 +27,24 @@ class Projects {
     public static Project unboundidClient
     public static Project buildSrc
 
-    public static def init(Project prj) {
-        initProjectReferencesByFieldName(prj)
+    /**
+     * The root project instance is required in order to initialize the references to the subprojects. This method should be
+     * invoked early on from the main build script.
+     *
+     * @param rootProject The {@link Project} instance representing the root project.
+     */
+    public static def init(Project rootProject) {
+        initProjectReferencesByFieldName(rootProject)
     }
 
-    private static def initProjectReferencesByFieldName(Project prj) {
+    private static def initProjectReferencesByFieldName(Project rootProject) {
         Projects.declaredFields.each {
             if (it.type == Project) {
                 try {
-                    it.set(null, prj.project(it.name))
+                    it.set(null, rootProject.project(it.name))
                 } catch (UnknownProjectException ignored) {
                     throw new RuntimeException(
-                            "Cannot initialize field Projects.$it.name, because there is no gradle project with that name.")
+                            "Cannot initialize field Projects.$it.name, because there is no Gradle subproject with that name.")
                 }
             }
         }

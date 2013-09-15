@@ -12,13 +12,13 @@
  *     Balazs Zagyvai
  ***************************************************************************** */
 
+
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDependency
 import static org.adsync4j.gradle.GradleUtils.javaPlugin
 import static org.adsync4j.gradle.GradleUtils.runUserScript
-import static org.adsync4j.gradle.IdeaUtils.sortDependenciesByScopeInIntelliJ
-import static org.adsync4j.gradle.IdeaUtils.sortIdeaDependencies
+import static org.adsync4j.gradle.IdeaUtils.sortDependenciesOfIntelliJModules
 import static org.adsync4j.gradle.Projects.*
 
 Project rootPrj = project
@@ -57,13 +57,13 @@ rootPrj.with {
             }
         }
 
-        sortIdeaDependencies(prj)
+        sortDependenciesOfIntelliJModules(prj)
         addGradleAsDependency(prj)
         customizeTestTasks(prj)
     }
 }
 
-// set up publishing to maven repository for selected projects
+// configure maven artifacts
 [core, unboundidClient].each { mavenPrj ->
     mavenPrj.with {
         apply plugin: 'maven'
@@ -93,7 +93,7 @@ rootPrj.with {
 def customizeTestTasks(Project prj) {
     prj.tasks.withType(Test) { Test test ->
         // optionally start the test jvm with a debugger attached
-        if (System.getProperty('attachDebugger') != null) {
+        if (System.getProperty('debug') != null) {
             test.jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
         }
         // propagate system properties from Gradle JVM to the forked test JVM
