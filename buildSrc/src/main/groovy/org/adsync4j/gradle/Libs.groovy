@@ -55,5 +55,6 @@ class Libs {
     final static def unboundid = "com.unboundid:unboundid-ldapsdk:${Versions.unboundid}"
 
     final static def slf4j(lib) { "org.slf4j:${lib}:${Versions.slf4j}" }
+
     final static def spring(lib) { "org.springframework:spring-${lib}:${Versions.spring}" }
 }

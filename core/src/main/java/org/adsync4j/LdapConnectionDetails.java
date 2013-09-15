@@ -13,6 +13,9 @@
  ******************************************************************************/
 package org.adsync4j;
 
+/**
+ * Interface for objects that store information required to open a connection to an LDAP server.
+ */
 public interface LdapConnectionDetails {
 
     String getProtocol();
