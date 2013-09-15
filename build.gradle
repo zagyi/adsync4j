@@ -18,6 +18,7 @@ import static org.adsync4j.gradle.GradleIdeaIntegrationHelper.addGradleAsDepende
 import static org.adsync4j.gradle.GradleUtils.javaPlugin
 import static org.adsync4j.gradle.GradleUtils.runUserScript
 import static org.adsync4j.gradle.IdeaUtils.sortDependenciesByScopeInIntelliJ
+import static org.adsync4j.gradle.IdeaUtils.sortIdeaDependencies
 import static org.adsync4j.gradle.Projects.*
 
 Project rootPrj = project
@@ -87,10 +88,6 @@ rootPrj.with {
         artifacts.add('archives', createSourcesJarTask)
         artifacts.add('archives', createJavadocJarTask)
     }
-}
-
-boolean isSnapshotVersion(Project prj) {
-    (prj.version as String).endsWith('-SNAPSHOT')
 }
 
 def customizeTestTasks(Project prj) {

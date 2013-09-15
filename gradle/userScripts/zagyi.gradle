@@ -2,6 +2,7 @@ import org.adsync4j.gradle.Projects
 import org.gradle.api.artifacts.maven.GroovyMavenDeployer
 import org.gradle.api.artifacts.maven.MavenDeployment
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
 
 import static org.adsync4j.gradle.GradleUtils.*
@@ -40,10 +41,22 @@ def setupMavenPublishing(Project mavenPrj, String sonatypeUsername, String sonat
     // staticPomContent is declared in gradle/pom.gradle
     archivesDeployer.pom(staticPomContent)
 
+    SigningExtension signingExtension = mavenPrj.extensions.getByType(SigningExtension)
+
+    // create signArchives which is a task that signs all artifacts in the archives configuration
+    Sign signArchives = signingExtension.sign(mavenPrj.configurations['archives'])[0]
+
+    // make uploadArchives task depend on signArchives
+    mavenPrj.tasks['uploadArchives'].dependsOn(signArchives)
+
+    // sign the pom file too before deployment
     archivesDeployer.beforeDeployment { MavenDeployment deployment ->
-        SigningExtension signingExtension = mavenPrj.extensions.getByType(SigningExtension)
         signingExtension.signPom(deployment)
     }
+}
+
+boolean isSnapshotVersion(Project prj) {
+    (prj.version as String).endsWith('-SNAPSHOT')
 }
 
 prj.tasks.create(
