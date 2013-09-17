@@ -13,8 +13,12 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid
 
+import com.unboundid.ldap.sdk.LDAPException
 import com.unboundid.ldap.sdk.LDAPInterface
+import com.unboundid.ldap.sdk.ResultCode
 import spock.lang.Specification
+
+import static org.adsync4j.unboundid.UnboundIDTestHelper.*
 
 class PagingLdapConnectionImplSpec extends Specification {
 
@@ -26,25 +30,14 @@ class PagingLdapConnectionImplSpec extends Specification {
 
         when:
         // checking just a few methods
-        pagingConnection.search(org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest)
+        pagingConnection.search(DUMMY_SEARCH_REQUEST)
         pagingConnection.delete('foo')
         pagingConnection.getEntry('foo')
 
         then:
-        1 * nonPagingConnection.search(org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest)
+        1 * nonPagingConnection.search(DUMMY_SEARCH_REQUEST)
         1 * nonPagingConnection.delete('foo')
         1 * nonPagingConnection.getEntry('foo')
-    }
-
-    def 'should not delegate PagingLdapSearcher methods'() {
-        given:
-        PagingLdapConnection pagingConnection = PagingLdapConnectionImpl.wrap(nonPagingConnection)
-
-        when:
-        pagingConnection.search(org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE)
-
-        then:
-        0 * this.nonPagingConnection._
     }
 
     def 'paging search returns all pages '() {
@@ -53,27 +46,38 @@ class PagingLdapConnectionImplSpec extends Specification {
         PagingLdapConnection pagingConnection = buildPagingLdapConnection(pages)
 
         when:
-        List entries = pagingConnection.search(org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE).collect()
+        List entries = pagingConnection.search(DUMMY_SEARCH_REQUEST, PAGE_SIZE).collect()
 
         then:
         entries as List == pages.flatten()
     }
 
-    // TODO: refactor code argument matchers to assertions on captured arguments
-    @SuppressWarnings("GroovyAssignabilityCheck")
+    def 'delegate exceptions from the underlying non-paging connection'() {
+        given:
+        // emulating a time-out on getEntry()
+        nonPagingConnection.getEntry(_) >> { throw new LDAPException(ResultCode.TIMEOUT) }
+        PagingLdapConnection pagingConnection = PagingLdapConnectionImpl.wrap(nonPagingConnection)
+
+        when:
+        pagingConnection.getEntry('foo')
+
+        then:
+        thrown LDAPException
+    }
+
     PagingLdapConnection buildPagingLdapConnection(List pages) {
-        def listOfSearchEntryLists = org.adsync4j.unboundid.UnboundIDTestHelper.wrapSearchEntryListsInResultObjects(pages)
+        def listOfSearchEntryLists = createPagedSearchResults(pages)
 
         // first invocation should not have a paging cookie
         if (listOfSearchEntryLists.size() > 0) {
-            1 * nonPagingConnection.search({ org.adsync4j.unboundid.UnboundIDTestHelper.hasMatchingPageCookie(it, null) }) >> listOfSearchEntryLists[0]
+            1 * nonPagingConnection.search({ searchRequestWithInitialPagingCookie(it) }) >> listOfSearchEntryLists[0]
             listOfSearchEntryLists.remove(0)
         }
 
         // unsigned right shift operator ('>>>') causes the mock take the right hand side
-        // expression as a _list_ of responses to be returned upon subsequent invokations
+        // expression as a _list_ of responses to be returned upon subsequent invocations
         listOfSearchEntryLists.size() *
-                nonPagingConnection.search({ org.adsync4j.unboundid.UnboundIDTestHelper.hasMatchingPageCookie(it, org.adsync4j.unboundid.UnboundIDTestHelper.PAGING_COOKIE) }) >>> listOfSearchEntryLists
+                nonPagingConnection.search({ searchRequestWithPagingCookie(it, PAGING_COOKIE) }) >>> listOfSearchEntryLists
 
         // interactions other than those explicitly specified in feature methods will be reported as errors
         0 * nonPagingConnection.search(_)

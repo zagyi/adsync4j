@@ -13,13 +13,11 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid;
 
-import com.unboundid.ldap.sdk.LDAPInterface;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.*;
 
 public interface PagingLdapConnection extends LDAPInterface, PagingLdapSearcher {
 }
 
 interface PagingLdapSearcher {
-    Iterable<SearchResultEntry> search(SearchRequest searchRequest, int pageSize);
+    Iterable<SearchResultEntry> search(SearchRequest searchRequest, int pageSize) throws LDAPException;
 }

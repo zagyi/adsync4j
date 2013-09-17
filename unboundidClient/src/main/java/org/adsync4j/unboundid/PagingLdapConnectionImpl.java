@@ -14,9 +14,7 @@
 package org.adsync4j.unboundid;
 
 import com.google.common.collect.Iterables;
-import com.unboundid.ldap.sdk.LDAPInterface;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -62,18 +60,21 @@ class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler 
 
     /**
      * Executes the search request applying paging behind the scenes. The return type cannot be a more specific collection
-     * type,
-     * because the total number of entries matching the search request is not known in advance.
+     * type, because the total number of entries matching the search request is not known in advance.
      *
-     * @return An {@link Iterable} of {@link SearchResultEntry} items through which it is possible to iterate over the entire
+     * @return An {@link Iterable} of {@link SearchResultEntry} items through which callers can iterate over the entire
      *         result set without caring about the fact that entries are fetched by pages behind the scenes.
      */
-    public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) {
+    @Override
+    public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) throws LDAPException {
+        searchRequest.setControls(new SimplePagedResultsControl(pageSize, null));
+        final SearchResult firstPage = _delegateConnection.search(searchRequest);
+
         Iterable<List<SearchResultEntry>> pages =
                 new Iterable<List<SearchResultEntry>>() {
                     @Override
                     public Iterator<List<SearchResultEntry>> iterator() {
-                        return new PagingSearchIterator(_delegateConnection, searchRequest, pageSize);
+                        return new PagingSearchIterator(_delegateConnection, searchRequest, firstPage);
                     }
                 };
         return Iterables.concat(pages);
