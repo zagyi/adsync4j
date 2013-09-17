@@ -13,6 +13,9 @@
  ***************************************************************************** */
 package org.adsync4j.gradle
 
+/**
+ * Class defining static fields for each dependent library and their versions.
+ */
 class Libs {
     static class Versions {
         final static def groovy = '2.1.3'
@@ -27,6 +30,10 @@ class Libs {
         final static def unboundid = '2.3.4'
     }
 
+    /**
+     * List of Gradle subprojects that we need to add as dependencies,
+     * in order to enjoy proper IDE support when editing build scripts.
+     */
     final static def gradleJars =
         ['base-services', 'base-services-groovy', 'core', 'ide', 'build-setup', 'plugins', 'maven', 'signing']
 

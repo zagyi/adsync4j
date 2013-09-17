@@ -13,21 +13,31 @@
  ***************************************************************************** */
 
 /**
- * WHY IS THERE A build.gradle, AND A buildSrc.gradle IN THIS PROJECT?
+ * WHY ARE THERE TWO BUILD SCRIPTS IN THIS PROJECT? (build.gradle and buildSrc.gradle)
  *
- * The buildSrc project is built by Gradle before any other project, and its output is automatically made available for build
- * scripts in other projects. When executing the build of the buildSrc project, Gradle looks for a build script with the
- * default file name ('build.gradle') . That's why we have 'build.gradle'.
+ * The buildSrc project has a distinguished role in Gradle. It is meant to hold code that is commonly used in build scripts
+ * of multiple subprojects. Instead of copying common logic and utility functions into each subproject that uses it,
+ * you can simply put common code in buildSrc, and Gradle will make sure it's compiled first and made available for build scripts
+ * in other projects. When building the buildSrc project, Gradle looks for a build script with the default file name
+ * ('build.gradle'). So that's why we have 'build.gradle', which is half of the story.
  *
- * This works perfectly fine, however the implicit dependency of "normal" projects on the buildSrc project is not known to the
- * IDE. That becomes a problem, because we don't get proper IDE support (e.g. code completion) when writing build scripts
- * that use code declared in the buildSrc project. In order to fix this we would need to make a normal IDE module out of the
- * buildSrc project and declare an explicit dependency on it in every other module(project). Since the default naming
- * convention of the projects' build scripts is overridden in settings.gradle, we need another build script with the projects
- * name: 'buildSrc.gradle'. This script won't be used by Gradle when it builds the buildSrc project as a first step to make it
- * available to other build scripts, but it will be used later, and the buildSrc project will be built again as a normal
- * sub-project during the build process. This is kind of a weird workaround, but it doesn't make much harm, and we get the
- * desired IDE support at the end, when 'gradle idea' is used to generate the proper IntelliJ IDEA modules.
+ * This works perfectly fine, however the implicit dependency of "normal" subprojects on the buildSrc project is not known to the
+ * IDE. That becomes a problem, when we use any code from buildSrc in other build scripts, because the IDE won't recognize where
+ * that code is supposed to come from, so proper IDE support (e.g. code completion) won't be available.
+ * In order to fix this, we would need to make a normal IDE module for the buildSrc project and declare an explicit dependency
+ * on it from every other project. To achieve this we have to elevate buildSrc to the level of an ordinary subproject, but how
+ * can we do that? Simply enlist buildSrc in the included projects in /settings.gradle, and create a second build script according
+ * to our own build script naming convention "<project's name>.gradle" (this convention is also established in /settings.gradle).
+ * So that's why we have 'buildSrc.gradle'.
+ *
+ * The result of this weird setup is that the buildSrc project is always built twice:
+ *  1. First, because (by convention) Gradle builds it to make common build logic available to build scrips in the entire
+ *  project (build.gradle is used here).
+ *  2. Second, because it's explicitly included in the list of subprojects in settings.gradle (buildSrc.gradle is used here.)
+ *
+ * This _is_ a hack, but it's still better than to forgo proper IDE support when using common code from buildSrc.
+ * To reduce the overhead of the second build, buildSrc.gradle overrides all tasks with a no-op action except for 'idea' and
+ * 'cleanIdea' -- after all, we only want an IntelliJ IDEA module generated for the project!
  */
 
 import org.adsync4j.gradle.Libs
@@ -39,11 +49,6 @@ buildSrc.dependencies.with {
     add('provided', Libs.guava)
     add('provided', Libs.slf4jApi)
 }
-
-// As this is a fake build script serving only the purpose that buildSrc appears as a normal module in IntelliJ IDEA,
-// we only need the tasks added by the idea plugin (that will create an idea module descriptor for buildSrc). Executing
-// any task other than the idea related ones is plain waste of time. For that reason we mute all unnecessary tasks here
-// (replace them with independent empty tasks).
 
 def nonIdeaPluginTasks = buildSrc.tasks.findAll { !it.name.toLowerCase().contains('idea') }
 

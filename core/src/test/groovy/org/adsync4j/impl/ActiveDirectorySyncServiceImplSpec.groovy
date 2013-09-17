@@ -42,7 +42,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
 
     def 'fail when DCA not found in repository'() {
         given:
-        def service = new ActiveDirectorySyncServiceImpl('foo', Mock(SimpleRepository), Mock(LdapClient))
+        def service = new ActiveDirectorySyncServiceImpl('foo', Mock(GenericRepository), Mock(LdapClient))
 
         when:
         service.incrementalSync(null)
@@ -219,7 +219,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         def affiliationRepository = [
                 load: { spec },
                 save: {}
-        ] as SimpleRepository
+        ] as GenericRepository
 
         def service = new ActiveDirectorySyncServiceImpl('foo', affiliationRepository, ldapClient)
         service._dcAffiliation = spec

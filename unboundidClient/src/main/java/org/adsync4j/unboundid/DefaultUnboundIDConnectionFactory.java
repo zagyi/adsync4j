@@ -18,7 +18,7 @@ import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.adsync4j.LdapClientException;
 import org.adsync4j.LdapConnectionDetails;
-import org.adsync4j.SimpleRepository;
+import org.adsync4j.GenericRepository;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDConnectionFactory {
 
     private final KEY _key;
-    private final SimpleRepository<KEY, ? extends LdapConnectionDetails> _ldapConnectionDetailsRepository;
+    private final GenericRepository<KEY, ? extends LdapConnectionDetails> _ldapConnectionDetailsRepository;
     @Nullable private final LDAPConnectionOptions _ldapConnectionOptions;
 
     private LdapConnectionDetails _ldapConnectionDetails;
@@ -40,14 +40,14 @@ public class DefaultUnboundIDConnectionFactory<KEY> implements PagingUnboundIDCo
     private PagingLdapConnection _connection;
 
     public DefaultUnboundIDConnectionFactory(
-            KEY key, SimpleRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository)
+            KEY key, GenericRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository)
     {
         this(key, ldapConnectionDetailsRepository, null);
     }
 
     public DefaultUnboundIDConnectionFactory(
             KEY key,
-            SimpleRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository,
+            GenericRepository<KEY, ? extends LdapConnectionDetails> ldapConnectionDetailsRepository,
             @Nullable LDAPConnectionOptions ldapConnectionOptions)
     {
         _key = key;

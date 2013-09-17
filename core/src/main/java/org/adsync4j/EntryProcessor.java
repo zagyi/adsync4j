@@ -16,11 +16,39 @@ package org.adsync4j;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A call-back interface through which clients of the ADSync4J library obtain new/changed/deleted LDAP entries.
+ * <p/>
+ * In case of a full synchronization, all entries are reported as new.
+ *
+ * @param <LDAP_ATTRIBUTE> The LDAP attribute type determined by the {@link LdapClient} implementation in use.
+ */
 public interface EntryProcessor<LDAP_ATTRIBUTE> {
 
+    /**
+     * Call-back method invoked during a full or incremental synchronization.
+     *
+     * @param entry The list of attributes of a new entry. It's guaranteed that this list contains the same number of
+     *              attribute values in the same order as it's determined by the {@link
+     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record.
+     *              Note that some of the values might be {@code null} in case the entry doesn't have a corresponding attribute.
+     */
     void processNew(List<LDAP_ATTRIBUTE> entry);
 
+    /**
+     * Call-back method invoked during an incremental synchronization.
+     *
+     * @param entry The list of attributes of a changed entry. It's guaranteed that this list contains the same number of
+     *              attribute values in the same order as it's determined by the {@link
+     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record.
+     *              Note that some of the values might be {@code null} in case the entry doesn't have a corresponding attribute.
+     */
     void processChanged(List<LDAP_ATTRIBUTE> entry);
 
+    /**
+     * Call-back method invoked during an incremental synchronization.
+     *
+     * @param entryId The GUID of an entry that has been deleted since the last synchronization.
+     */
     void processDeleted(UUID entryId);
 }

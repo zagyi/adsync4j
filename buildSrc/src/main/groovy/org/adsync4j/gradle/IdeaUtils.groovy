@@ -21,31 +21,38 @@ import org.gradle.plugins.ide.idea.model.ModuleDependency
 import org.gradle.plugins.ide.idea.model.ModuleLibrary
 import org.gradle.plugins.ide.idea.model.SingleEntryModuleLibrary
 
+/**
+ * Utility class that helps sorting the dependencies of an IntelliJ IDEA module by type (type means here project source folder
+ * vs. external jar dependency), scope and name. This is critical if you must resort to hacks where some project sources
+ * override/patch classes from an external jar dependency, in which case you have to ensure that project sources are positioned
+ * on the classpath before the jar that is being patched).
+ */
 class IdeaUtils {
-    static final Ordering scopeOrdering = Ordering.explicit("COMPILE", "RUNTIME", "TEST", "PROVIDED");
 
-    static def typeComparator = { d1, d2 ->
+    private static final Ordering scopeOrdering = Ordering.explicit("COMPILE", "RUNTIME", "TEST", "PROVIDED");
+
+    private static def typeComparator = { d1, d2 ->
         dependencyTypeRankMap[d1.getClass()] <=> dependencyTypeRankMap[d2.getClass()]
     } as Comparator
 
-    static def dependencyTypeRankMap = [
+    private static def dependencyTypeRankMap = [
             (ModuleDependency): 1, // type representing an internal module dependency
             (ModuleLibrary): 1000, // type representing an external jar dependency
             (SingleEntryModuleLibrary): 1000, // type representing an external jar dependency
     ]
 
-    static def scopeComparator = { d1, d2 ->
+    private static def scopeComparator = { d1, d2 ->
         scopeOrdering.compare(d1.scope, d2.scope) } as Comparator
 
-    static def nameComparator = { d1, d2 -> extractName(d1) <=> extractName(d2) } as Comparator
+    private static def nameComparator = { d1, d2 -> extractName(d1) <=> extractName(d2) } as Comparator
 
-    static def dependenciesOrdering = Ordering.compound([typeComparator, scopeComparator, nameComparator])
+    private static def dependenciesOrdering = Ordering.compound([typeComparator, scopeComparator, nameComparator])
 
-    static def extractName(ModuleDependency md) {
+    private static def extractName(ModuleDependency md) {
         md.name
     }
 
-    static def extractName(ModuleLibrary ml) {
+    private static def extractName(ModuleLibrary ml) {
         if (!ml.classes.isEmpty()) {
             def firstUrl = ml.classes.iterator().next().url
             def match = (firstUrl =~ /([^\/]*)\.jar/)
@@ -55,7 +62,12 @@ class IdeaUtils {
         }
     }
 
-    static def sortIdeaDependencies(Project prj) {
+    /**
+     * Sorts the dependencies of the IntelliJ IDEA module generated for the specified project. The sort order is: type, scope,
+     * name. Type means here project source folder vs. external jar dependency.
+     * @param prj
+     */
+    static def sortDependenciesOfIntelliJModules(Project prj) {
         IdeaModel idea = prj.idea
         idea.module.iml.whenMerged { Module module ->
             def sortedDependencies = new TreeSet(IdeaUtils.dependenciesOrdering)
@@ -66,8 +78,8 @@ class IdeaUtils {
 
     static def checkIfJavaPluginHasAlreadyBeenAppliedAtThisPoint(project) {
         assert project.plugins.hasPlugin('java'), """
-    The 'idea' plugin is being applied without the 'java' plugin being applied first. As the former basically depends on the
-    latter, you will have to make sure that the 'java' plugin is applied first in project '${project.name}'.
+    The idea plugin has some implicit dependencies on the java plugin. It seems that in $project the java plugin has not been
+    applied, or it was applied after the idea plugin. Please fix this problem by applying the java plugin before the idea plugin.
     """
     }
 }
