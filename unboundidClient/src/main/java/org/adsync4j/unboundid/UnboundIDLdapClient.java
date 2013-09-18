@@ -40,6 +40,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
     private final PagingUnboundIDConnectionFactory _connectionFactory;
 
     private int _pageSize = DEFAULT_PAGE_SIZE;
+    private PagingLdapConnection _connection;
 
     public UnboundIDLdapClient(PagingUnboundIDConnectionFactory connectionFactory) {
         _connectionFactory = connectionFactory;
@@ -53,7 +54,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
     @Override
     public Attribute getRootDSEAttribute(String attribute) throws LdapClientException {
         try {
-            RootDSE rootDSE = _connectionFactory.getConnection().getRootDSE();
+            RootDSE rootDSE = getConnection().getRootDSE();
             LdapClientException.throwIfNull(rootDSE, "Root DSE not available.");
 
             Attribute rootDSEAttribute = rootDSE.getAttribute(attribute);
@@ -70,7 +71,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
     @Override
     public Attribute getEntryAttribute(String entryDN, String attributeName) throws LdapClientException {
         try {
-            SearchResultEntry entry = _connectionFactory.getConnection().getEntry(entryDN, attributeName);
+            SearchResultEntry entry = getConnection().getEntry(entryDN, attributeName);
             LdapClientException.throwIfNull(entry, "Missing entry '%s'", entryDN);
             Attribute attribute = entry.getAttribute(attributeName);
             LdapClientException.throwIfNull(attribute,
@@ -95,7 +96,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
                     filter,
                     attributeArray);
 
-            Iterable<SearchResultEntry> searchResult = _connectionFactory.getConnection().search(searchRequest, _pageSize);
+            Iterable<SearchResultEntry> searchResult = getConnection().search(searchRequest, _pageSize);
 
             return resultEntriesToAttributeArrays(searchResult, attributeArray);
         } catch (LDAPException e) {
@@ -146,7 +147,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
             SearchRequest searchRequest = new SearchRequest(rootDN, SearchScope.SUB, filter, OBJECT_GUID);
             searchRequest.addControl(new Control(SHOW_DELETED_CONTROL_OID));
 
-            Iterable<SearchResultEntry> searchResult = _connectionFactory.getConnection().search(searchRequest, _pageSize);
+            Iterable<SearchResultEntry> searchResult = getConnection().search(searchRequest, _pageSize);
 
             return resultEntriesToUUIDs(searchResult);
         } catch (LDAPException e) {
@@ -179,5 +180,19 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
     @Override
     public LdapAttributeResolver<Attribute> getAttributeResolver() {
         return UnboundIdAttributeResolver.INSTANCE;
+    }
+
+    @Override
+    public void closeConnection() {
+        if (_connection != null) {
+            _connectionFactory.closeConnection(_connection);
+        }
+    }
+
+    private PagingLdapConnection getConnection() {
+        if (_connection == null) {
+            _connection = _connectionFactory.createConnection();
+        }
+        return _connectionFactory.ensureConnection(_connection);
     }
 }

@@ -145,6 +145,9 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         and: 'assert that the affiliation record is updated with the invocation id and the highest committed USN'
         spec.localHighestCommittedUSN == newLocalHighestCommittedUSN
         spec.localInvocationId == spec.remoteInvocationId
+
+        then: 'close the ldap connection'
+        1 * ldapClient.closeConnection()
     }
 
     def 'incremental synchronization'() {
@@ -191,6 +194,9 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
 
         and: 'assert that the affiliation record is updated with the highest committed USN'
         spec.localHighestCommittedUSN == newLocalHighestCommittedUSN
+
+        then: 'close the ldap connection'
+        1 * ldapClient.closeConnection()
     }
 
     def invocationIdIsRetrieved() {

@@ -16,8 +16,23 @@ package org.adsync4j.unboundid;
 import org.adsync4j.LdapClientException;
 
 /**
- * Interface for factories capable of creating a {@link PagingLdapConnection}.
+ * Interface for factories capable of managing a {@link PagingLdapConnection}.
  */
 public interface PagingUnboundIDConnectionFactory {
-    PagingLdapConnection getConnection() throws LdapClientException;
+
+    PagingLdapConnection createConnection() throws LdapClientException;
+
+    /**
+     * Ensures that the provided connection is open (reconnects in case it's not).
+     *
+     * @param connection The connection to examine.
+     */
+    PagingLdapConnection ensureConnection(PagingLdapConnection connection) throws LdapClientException;
+
+    /**
+     * Closes the physical connection to the LDAP server.
+     *
+     * @param connection The connection to close.
+     */
+    void closeConnection(PagingLdapConnection connection);
 }

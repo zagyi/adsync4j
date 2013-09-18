@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * Interface that defines all operations an LDAP client implementation needs to provide, so that it can be used by
- * {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl}.
+ * {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl ActiveDirectorySyncServiceImpl}.
  * <p/>
  * Implementations are free to use any LDAP SDK available for Java to implement this interface. Each of these SDKs define a
  * specific type to represent an LDAP attribute (e.g. it's {@link javax.naming.directory.Attribute} in case of JNDI,
@@ -28,6 +28,10 @@ import java.util.UUID;
  * Therefore a type parameter is defined for the SDK specific attribute type, and implementations will have to provide an
  * accompanying class that can resolve the SDK specific attribute to well known types like String, Long,
  * etc. (see {@link org.adsync4j.LdapClient#getAttributeResolver()}).
+ * <p/>
+ * Once the synchronization operation is finished, the service will call {@link LdapClient#closeConnection closeConnection()}
+ * to release any resources associated with the connection. Implementations must make sure that the connection is automatically
+ * re-opened if any of the interface's methods is invoked after a call to {@link LdapClient#closeConnection closeConnection()}.
  *
  * @param <LDAP_ATTRIBUTE> The LDAP attribute type defined in the SDK with the help of which this interface was implemented.
  */
@@ -106,8 +110,13 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
 
     /**
      * @return An auxiliary function object that helps to interpret the LDAP attribute type specific to the LDAP SDK used by
-     * the implementation class.
+     *         the implementation class.
      */
     @Nonnull
     LdapAttributeResolver<LDAP_ATTRIBUTE> getAttributeResolver();
+
+    /**
+     * Closes the underlying connection to the LDAP server.
+     */
+    void closeConnection();
 }

@@ -57,4 +57,12 @@ class UnboundIDLdapClientSystemSpec extends AbstractSystemSpec {
         def actualDeleted = result.collect { it.toString() }
         actualDeleted == testFixtures.deleted
     }
+
+    def 'should automatically re-open connection'() {
+        given:
+        ldapClient.closeConnection()
+
+        expect: 'use of any ldapClient method should re-open the connection, and work as expected'
+        testFixtures.dsServiceName == ldapClient.getRootDSEAttribute('dsServiceName').value
+    }
 }

@@ -76,6 +76,13 @@ public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationH
         return Iterables.concat(pages);
     }
 
+    /**
+     * @return The wrapped connection.
+     */
+    /*package*/ LDAPInterface getDelegateConnection() {
+        return _delegateConnection;
+    }
+
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.getName().equals("search")
