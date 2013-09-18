@@ -22,13 +22,18 @@ import java.util.UUID;
  * <p/>
  * It defines properties:
  * <ul>
- * <li>on how to access and identify the Domain Controller,</li>
  * <li>on what the scope of synchronization is,</li>
+ * <li>on how to identify the Domain Controller,</li>
  * <li>and a {@link DomainControllerAffiliation#getHighestCommittedUSN marker} designating the point of time until which all
- * entries and changes are retrieved from Active Directory.</li>
+ * entries and changes has already been retrieved from Active Directory.</li>
  * </ul>
  */
-public interface DomainControllerAffiliation extends LdapConnectionDetails {
+public interface DomainControllerAffiliation {
+
+    /**
+     * @return DN of the root entry of the Active Directory tree (e.g. {@code DC=example,DC=com}).
+     */
+    String getRootDN();
 
     /**
      * @return DN of the node designating the sub-tree of the directory which is the scope of synchronization (e.g.

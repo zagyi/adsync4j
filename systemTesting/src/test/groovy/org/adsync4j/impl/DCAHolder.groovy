@@ -1,13 +1,13 @@
 package org.adsync4j.impl
 
 import org.adsync4j.DomainControllerAffiliation
-import org.adsync4j.GenericRepository
+import org.adsync4j.DCARepository
 
-class DomainControllerAffiliationHolder implements GenericRepository<Object, DomainControllerAffiliation> {
+class DCAHolder implements DCARepository {
 
     def dca
 
-    DomainControllerAffiliationHolder(dca) {
+    DCAHolder(dca) {
         this.dca = dca
     }
 

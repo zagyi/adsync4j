@@ -19,12 +19,6 @@ class DomainControllerAffiliationBean implements DomainControllerAffiliation {
     UUID invocationId
     Long highestCommittedUSN
 
-    String protocol
-    String host
-    int port
-    String bindUser
-    String bindPassword
-
     String rootDN
     String syncBaseDN
     List<String> attributesToSync

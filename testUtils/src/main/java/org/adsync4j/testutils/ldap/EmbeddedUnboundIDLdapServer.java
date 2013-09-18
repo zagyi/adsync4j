@@ -19,6 +19,7 @@ import com.google.common.io.Files;
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.schema.Schema;
 import com.unboundid.ldif.LDIFException;
@@ -105,6 +106,10 @@ public class EmbeddedUnboundIDLdapServer {
         } else {
             LOG.warn("shutDown() called on an uninitialized instance.");
         }
+    }
+
+    public LDAPConnection getConnection() throws LDAPException {
+        return _server.getConnection();
     }
 
     private void initSchema(InMemoryDirectoryServerConfig config) throws LDAPSDKException, IOException {

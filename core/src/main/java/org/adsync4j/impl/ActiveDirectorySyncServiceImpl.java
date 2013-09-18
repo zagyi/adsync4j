@@ -31,36 +31,41 @@ import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAt
  * Implementation of the main service interface of ADSync4J.
  * <p/>
  * As the construction of instances of this class is cheap, each {@link DomainControllerAffiliation} (DCA) you want to use
- * requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However, instead of directly setting the {@link
- * DomainControllerAffiliation DCA}, clients need to provide a repository of {@link DomainControllerAffiliation DCA}s
- * and the key identifying the specific {@link DomainControllerAffiliation DCA} based on which synchronization is to be carried
- * out. (See the {@link ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}).
+ * requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However, instead of directly setting the DCA, clients
+ * need to provide a repository of DCAs and the key identifying the specific DCA based on which synchronization is to be
+ * carried out. (See the {@link ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}).
  * <p/>
- * This indirection makes it possible to relieve clients of the responsibility to update the highest committed Update
- * Sequence Number in the {@link DomainControllerAffiliation#setHighestCommittedUSN DCA} and to persist the updated record,
- * which is essential for the correct functioning of synchronization operations.
+ * This indirection makes it possible to relieve clients of the responsibility to update the highest committed Update Sequence
+ * Number in the DCA and to persist the updated record, which is essential for the correct functioning of synchronization
+ * operations.
+ * <p/>
+ * This class defines a number of type parameters which are required, so that clients can:
+ * <ul>
+ * <li>provide their own implementation of the {@link DomainControllerAffiliation} interface (e.g. a JPA entity),</li>
+ * <li>freely choose an arbitrary key type for the repository storing DCAs,</li>
+ * <li>pick an LDAP SDK to use for implementing the {@link LdapClient} interface.</li>
+ * </ul>
  * <p/>
  * <b>Important!</b>
- * The provided repository must persist {@link DomainControllerAffiliation DCA}s in the same physical database that also stores
- * the synchronized entries. This is necessary to ensure that the {@link DomainControllerAffiliation DCA} stays consistent
- * with the synchronized data in case the database is restored from a backup.
+ * The provided DCA repository must persist DCAs in the same physical database that also stores the synchronized entries. This is
+ * necessary to ensure that the DCA stays consistent with the synchronized data in case the database is restored from a backup.
  * <p/>
  * This class is NOT thread-safe.
  *
- * @param <DCA_KEY>        Type of the key used in the provided {@link DomainControllerAffiliation DCA} repository. This
- *                         type parameter is required, so that clients can freely choose an arbitrary key type for the
- *                         repository.
+ * @param <DCA_KEY>        Type of the key used in the provided DCA repository.
+ * @param <DCA_IMPL>       The implementation class of the {@link DomainControllerAffiliation} used the provided DCA repository.
  * @param <LDAP_ATTRIBUTE> The LDAP attribute type determined by the {@link LdapClient} implementation in use.
  */
 @NotThreadSafe
-public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
+public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainControllerAffiliation, LDAP_ATTRIBUTE>
+        implements ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
 
     protected final DCA_KEY _dcaKey;
-    protected final GenericRepository<DCA_KEY, DomainControllerAffiliation> _affiliationRepository;
+    protected final DCARepository<DCA_KEY, DCA_IMPL> _affiliationRepository;
     protected final LdapClient<LDAP_ATTRIBUTE> _ldapClient;
     protected final LdapAttributeResolver<LDAP_ATTRIBUTE> _attributeResolver;
 
-    protected DomainControllerAffiliation _dcAffiliation;
+    protected DCA_IMPL _dcAffiliation;
 
     protected interface SyncOperation<LDAP_ATTRIBUTE> {
         void execute(long remoteHighestCommittedUSN, EntryProcessor<LDAP_ATTRIBUTE> entryProcessor);
@@ -74,7 +79,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
          * Attribute contained in a directory entry that is pointed to by the 'dsServiceName' attribute of the root DSE. It's
          * value is basically the Domain Controller's identifier.
          *
-         * @see org.adsync4j.DomainControllerAffiliation#getInvocationId()
+         * @see DomainControllerAffiliation#getInvocationId()
          */
         INVOCATION_ID("invocationID"),
 
@@ -127,9 +132,10 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
      * in order to allow the service to persist the updated DCA after a successful synchronization.
      * <p/>
      * <b>Important!</b>
-     * The provided repository {@link GenericRepository} must persist DCAs in the same physical database that stores
-     * the synchronized entries. This is necessary to ensure that the {@link DomainControllerAffiliation} stays consistent
-     * with the synchronized entries in case the database is restored from a backup.
+     * The provided repository {@link DCARepository} must persist DCAs in the same
+     * physical database that
+     * stores the synchronized entries. This is necessary to ensure that the {@link DomainControllerAffiliation} stays
+     * consistent with the synchronized entries in case the database is restored from a backup.
      *
      * @param dcaKey                Key of the {@link DomainControllerAffiliation} based on which this service instance
      *                              has to perform synchronization. The passed {@code affiliationRepository} must contain a
@@ -139,7 +145,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
      */
     public ActiveDirectorySyncServiceImpl(
             DCA_KEY dcaKey,
-            GenericRepository<DCA_KEY, DomainControllerAffiliation> affiliationRepository,
+            DCARepository<DCA_KEY, DCA_IMPL> affiliationRepository,
             LdapClient<LDAP_ATTRIBUTE> ldapClient)
     {
         _dcaKey = dcaKey;
@@ -185,7 +191,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
      * <p/>
      * This template makes sure that the highest committed USN is always retrieved from the server as the first step,
      * and it's always {@link DomainControllerAffiliation#setHighestCommittedUSN set on the DCA} (which also gets {@link
-     * GenericRepository#save persisted}) as the last step.
+     * DCARepository#save persisted}) as the last step.
      *
      * @param entryProcessor Call-back object implemented by the client.
      * @param syncOperation  Function object encapsulating the behavior of the specific sync operation to be performed.
@@ -199,7 +205,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
         syncOperation.execute(remoteHighestCommittedUSN, entryProcessor);
 
         _dcAffiliation.setHighestCommittedUSN(remoteHighestCommittedUSN);
-        _affiliationRepository.save(_dcAffiliation);
+        _dcAffiliation = _affiliationRepository.save(_dcAffiliation);
         return remoteHighestCommittedUSN;
     }
 
@@ -383,11 +389,8 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
     }
 
     /**
-     * Combines the provided LDAP filter expressions with the logical AND operator.
+     * Combines the provided LDAP filter expressions into one single expression using the logical AND operator.
      *
-     * @param firstFilter
-     * @param secondFilter
-     * @param otherFilters
      * @return A new LDAP filter expression that combines all input filters with the logical AND operator.
      */
     protected static String and(String firstFilter, String secondFilter, String... otherFilters) {
@@ -401,9 +404,9 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, LDAP_ATTRIBUTE> implements 
     /**
      * Wraps the provided filter expression in parenthesis, unless it's already wrapped.
      *
-     * @param filter    An LDAP filter expression.
+     * @param filter An LDAP filter expression.
      * @return A {@link StringBuilder} containing the input filter wrapped in parenthesis if it was not wrapped before,
-     * otherwise the original filter expression is returned.
+     *         otherwise the original filter expression is returned.
      */
     private static StringBuilder ensureWrappedInParenthesis(String filter) {
         StringBuilder result = new StringBuilder(filter.length() + 2);
