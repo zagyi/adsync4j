@@ -26,26 +26,24 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Helper class that executes {@link SearchRequest}s with paging while shielding the caller from the complexity of managing the
- * {@link SimplePagedResultsControl paging search control object} and the paging cookie. The client code stays completely
- * unaware of the fact that search results are fetched by pages in multiple subsequent steps.
- * <p/>
- * Doing a paging search then becomes as simple as:
- * <pre>
- * PagingSearchExecutor pagingSearchExecutor = new PagingSearchExecutor(getConnection(), searchRequest, _pageSize);
- * for (SearchResultEntry entry : pagingSearchExecutor.search()) {
- *     // process the entry
- * }
- * </pre>
+ * Implementation of {@link PagingLdapSearcher} that can be used in two different ways:
+ * <ul>
+ * <li>Use the {@link PagingLdapConnectionImpl#PagingLdapConnectionImpl constructor} to create an instance that will only
+ * offer {@link PagingLdapSearcher} methods. Recommended if you only want to quickly perform a paged LDAP search.</li>
+ * <li>Use the {@link PagingLdapConnectionImpl#wrap static factory method} that wraps the provided connection and returns a
+ * proxy implementing {@link PagingLdapConnection}, which means that you can use it as an enhanced drop-in replacement of
+ * the provided connection which is now able to execute {@link PagingLdapSearcher#search paged search requests}.</li>
+ * </ul>
  */
 @ThreadSafe
-class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler {
+public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler {
     private final LDAPInterface _delegateConnection;
 
     /**
-     * Creates a search executor that applies paging when retrieving search results.
+     * Wraps the provided {@link LDAPInterface} in order to make {@link PagingLdapSearcher} methods available.
      *
-     * @param connection The connection on which the search request is to be executed.
+     * @param connection The connection to be wrapped.
+     * @return A proxy wrapping the provided connection adding {@link PagingLdapSearcher} methods to it.
      */
     public static PagingLdapConnection wrap(LDAPInterface connection) {
         return (PagingLdapConnection) Proxy.newProxyInstance(
@@ -54,17 +52,15 @@ class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler 
                 new PagingLdapConnectionImpl(connection));
     }
 
+    /**
+     * Creates an instance that is able to execute paging search requests using the provided LDAP connection.
+     *
+     * @param delegateConnection The connection to delegate to.
+     */
     public PagingLdapConnectionImpl(LDAPInterface delegateConnection) {
         _delegateConnection = delegateConnection;
     }
 
-    /**
-     * Executes the search request applying paging behind the scenes. The return type cannot be a more specific collection
-     * type, because the total number of entries matching the search request is not known in advance.
-     *
-     * @return An {@link Iterable} of {@link SearchResultEntry} items through which callers can iterate over the entire
-     *         result set without caring about the fact that entries are fetched by pages behind the scenes.
-     */
     @Override
     public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) throws LDAPException {
         searchRequest.setControls(new SimplePagedResultsControl(pageSize, null));

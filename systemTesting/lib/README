@@ -1,5 +1,0 @@
-unboundid-ldapsdk-2.3.3-nonsealed.jar is the exact copy of unboundid-ldapsdk-2.3.3.jar available in the maven central
-repository with one single difference: it's not sealed (META-INF/MANIFEST.MF doesn't contain "Sealed: true").
-This really nasty workaround was necessary, because some of the classes in this jar had to be extended in order to mock the
-behavior of an Active Directory server, however these classes are final. In order to be able to replace the original classes
-with patched (non-final) versions in another deployment unit, it became necessary to un-seal the jar...

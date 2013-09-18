@@ -28,6 +28,11 @@ import java.util.UUID;
 import static com.google.common.collect.Iterables.toArray;
 import static org.adsync4j.UUIDUtils.bytesToUUID;
 
+/**
+ * This implementation of the {@link LdapClient} interface uses the UnboundID LDAP SDK to communicate with Active Directory.
+ * The LDAP connection used by this class ensures that all search operations are paged without any further effort from the
+ * client's side.
+ */
 public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
     private final static XLogger LOG = XLoggerFactory.getXLogger(UnboundIDLdapClient.class);
@@ -36,7 +41,7 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
     private int _pageSize = DEFAULT_PAGE_SIZE;
 
-    public UnboundIDLdapClient(PagingUnboundIDConnectionFactory connectionFactory) throws LdapClientException {
+    public UnboundIDLdapClient(PagingUnboundIDConnectionFactory connectionFactory) {
         _connectionFactory = connectionFactory;
     }
 
@@ -98,6 +103,15 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
         }
     }
 
+    /**
+     * Transforms the provided series of search result entries into series of {@link Attribute} arrays that is guaranteed to
+     * contain attribute values in the same number and order as the second argument of attribute names (the attribute array may
+     * contain {@code null} values).
+     *
+     * @param searchResult A number of {@link SearchResultEntry} objects to transform.
+     * @param attributes   Name of the attributes. Determines the number and order of attributes in the output.
+     * @return A series of {@link Attribute} arrays, each array representing one search result entry.
+     */
     private Iterable<Attribute[]> resultEntriesToAttributeArrays(
             Iterable<SearchResultEntry> searchResult, final String[] attributes)
     {
@@ -110,6 +124,11 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
                 });
     }
 
+    /**
+     * Extracts {@link Attribute}s from the provided {@link SearchResultEntry} and returns them in the same order as the
+     * attribute names are specified in the second argument. Some of the {@link Attribute} references may be null in the
+     * returned array.
+     */
     private Attribute[] ensureAttributeOrder(SearchResultEntry resultEntry, String[] attributes) {
         Attribute[] result = new Attribute[attributes.length];
         int i = 0;
@@ -135,6 +154,11 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
         }
     }
 
+    /**
+     * Transforms the provided series of {@link SearchResultEntry} objects into a series of {@link UUID} objects. This method
+     * assumed that the first attribute of each entry is a 16-byte long byte array (the {@code objectGUID} attribute)
+     * representing the ID of the entry.
+     */
     private Iterable<UUID> resultEntriesToUUIDs(Iterable<SearchResultEntry> searchResult) {
         return Iterables.transform(searchResult,
                 new Function<SearchResultEntry, UUID>() {

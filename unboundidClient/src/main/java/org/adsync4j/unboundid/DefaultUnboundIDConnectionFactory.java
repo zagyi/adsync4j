@@ -24,7 +24,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
- * Default connection factory that creates an unsecured connection with the given user and password.
+ * A simple default implementation of {@link PagingUnboundIDConnectionFactory} that creates and caches one single unsecured
+ * connection with the provided parameters.
  */
 @NotThreadSafe
 public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnectionFactory {
@@ -64,6 +65,10 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
         return _connection;
     }
 
+    /**
+     * Creates an {@link LDAPConnection} based on the information passed at creation time, and wraps it in a
+     * {@link PagingLdapConnectionImpl} that implements the paging search operation.
+     */
     private PagingLdapConnection createConnection() {
         try {
             checkArgument("ldap".equals(_protocol),

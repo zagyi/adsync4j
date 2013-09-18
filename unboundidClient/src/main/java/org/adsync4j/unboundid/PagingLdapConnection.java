@@ -15,9 +15,9 @@ package org.adsync4j.unboundid;
 
 import com.unboundid.ldap.sdk.*;
 
+/**
+ * Interface that declares an additional {@link PagingLdapConnection#search(SearchRequest, int) paging search} operation on top
+ * of the available methods in {@link LDAPInterface}.
+ */
 public interface PagingLdapConnection extends LDAPInterface, PagingLdapSearcher {
-}
-
-interface PagingLdapSearcher {
-    Iterable<SearchResultEntry> search(SearchRequest searchRequest, int pageSize) throws LDAPException;
 }

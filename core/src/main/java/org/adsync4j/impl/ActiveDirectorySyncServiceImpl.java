@@ -33,11 +33,9 @@ import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAt
  * As the construction of instances of this class is cheap, each {@link DomainControllerAffiliation} (DCA) you want to use
  * requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However, instead of directly setting the DCA, clients
  * need to provide a repository of DCAs and the key identifying the specific DCA based on which synchronization is to be
- * carried out. (See the {@link ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}).
- * <p/>
- * This indirection makes it possible to relieve clients of the responsibility to update the highest committed Update Sequence
- * Number in the DCA and to persist the updated record, which is essential for the correct functioning of synchronization
- * operations.
+ * carried out. (See the {@link ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}). This indirection
+ * makes it possible to relieve clients of the responsibility to update the highest committed Update Sequence  Number in the
+ * DCA and to persist the updated record, which is essential for the correct functioning of synchronization operations.
  * <p/>
  * This class defines a number of type parameters which are required, so that clients can:
  * <ul>

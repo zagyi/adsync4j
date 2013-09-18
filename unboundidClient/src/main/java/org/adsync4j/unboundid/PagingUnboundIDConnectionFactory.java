@@ -15,6 +15,9 @@ package org.adsync4j.unboundid;
 
 import org.adsync4j.LdapClientException;
 
+/**
+ * Interface for factories capable of creating a {@link PagingLdapConnection}.
+ */
 public interface PagingUnboundIDConnectionFactory {
     PagingLdapConnection getConnection() throws LdapClientException;
 }
