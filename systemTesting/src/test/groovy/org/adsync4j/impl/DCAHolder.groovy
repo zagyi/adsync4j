@@ -1,7 +1,7 @@
 package org.adsync4j.impl
 
-import org.adsync4j.DomainControllerAffiliation
-import org.adsync4j.DCARepository
+import org.adsync4j.spi.DomainControllerAffiliation
+import org.adsync4j.spi.DCARepository
 
 class DCAHolder implements DCARepository {
 

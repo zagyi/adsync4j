@@ -14,11 +14,11 @@
 package org.adsync4j.unboundid
 
 import com.unboundid.ldap.sdk.*
-import org.adsync4j.LdapClientException
+import org.adsync4j.api.LdapClientException
 import spock.lang.Specification
 
-import static org.adsync4j.LdapClient.OBJECT_GUID
-import static org.adsync4j.LdapClient.SHOW_DELETED_CONTROL_OID
+import static org.adsync4j.spi.LdapClient.OBJECT_GUID
+import static org.adsync4j.spi.LdapClient.SHOW_DELETED_CONTROL_OID
 import static org.adsync4j.testutils.TestUtils.uuidToBytArray
 
 class UnboundIDLdapClientSpec extends Specification {

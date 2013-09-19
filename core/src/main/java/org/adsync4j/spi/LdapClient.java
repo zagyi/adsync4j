@@ -11,7 +11,9 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.spi;
+
+import org.adsync4j.api.LdapClientException;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
@@ -27,7 +29,7 @@ import java.util.UUID;
  * able to leave the decision to the implementations which LDAP SDK to use, some indirection had to be introduced here.
  * Therefore a type parameter is defined for the SDK specific attribute type, and implementations will have to provide an
  * accompanying class that can resolve the SDK specific attribute to well known types like String, Long,
- * etc. (see {@link org.adsync4j.LdapClient#getAttributeResolver()}).
+ * etc. (see {@link LdapClient#getAttributeResolver()}).
  * <p/>
  * Once the synchronization operation is finished, the service will call {@link LdapClient#closeConnection closeConnection()}
  * to release any resources associated with the connection. Implementations must make sure that the connection is automatically
@@ -55,7 +57,8 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
      *
      * @param attributeName Name of the attribute contained in the root DSE.
      * @return Value of the root DSE attribute.
-     * @throws LdapClientException if the root DSE cannot be retrieved or the specified attribute does not exist.
+     * @throws org.adsync4j.api.LdapClientException
+     *          if the root DSE cannot be retrieved or the specified attribute does not exist.
      */
     @Nonnull
     LDAP_ATTRIBUTE getRootDSEAttribute(String attributeName) throws LdapClientException;
@@ -97,8 +100,8 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
      * <b>Important!</b> Implementations must make sure that  the search request contains the request control with the OID
      * defined in {@link LdapClient#SHOW_DELETED_CONTROL_OID}.
      * <p/>
-     * Implementations can use the helper method {@link UUIDUtils#bytesToUUID(byte[])} to correctly decode the {@code
-     * objectGUID} value (a 16-byte array) as a {@link UUID} object.
+     * Implementations can use the helper method {@link org.adsync4j.impl.UUIDUtils#bytesToUUID(byte[]) UUIDUtils.bytesToUUID()}
+     * to correctly decode the {@code objectGUID} value (a 16-byte long byte array) as a {@link UUID} object.
      *
      * @param rootDN Root DN of the directory's domain (e.g. {@code DC=example,DC=com})
      * @param filter LDAP filter expression to use when searching for deleted objects.

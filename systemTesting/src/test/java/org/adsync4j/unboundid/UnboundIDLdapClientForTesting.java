@@ -13,7 +13,7 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid;
 
-import org.adsync4j.LdapClientException;
+import org.adsync4j.api.LdapClientException;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public class UnboundIDLdapClientForTesting extends UnboundIDLdapClient {
 
     /**
      * The implementation in the super-class passes the root DN as search base to Active Directory which will automatically
-     * look up the Deleted Objects Container when it encounters the {@link org.adsync4j.LdapClient#SHOW_DELETED_CONTROL_OID
+     * look up the Deleted Objects Container when it encounters the {@link org.adsync4j.spi.LdapClient#SHOW_DELETED_CONTROL_OID
      * show deleted} request control. Since the in-memory AD mock server doesn't implement this logic, we must compensate for
      * it on the client side by specifying the deleted objects container as the base of the search operation.
      */

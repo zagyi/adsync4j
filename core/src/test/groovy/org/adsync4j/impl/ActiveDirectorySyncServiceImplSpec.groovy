@@ -13,7 +13,9 @@
  ******************************************************************************/
 package org.adsync4j.impl
 
-import org.adsync4j.*
+import org.adsync4j.api.InitialFullSyncRequiredException
+import org.adsync4j.api.InvocationIdMismatchException
+import org.adsync4j.spi.*
 import org.adsync4j.testutils.TestUtils
 import spock.lang.Specification
 

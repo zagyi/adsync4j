@@ -1,7 +1,7 @@
 package org.adsync4j.unboundid;
 
 import com.unboundid.ldap.sdk.Attribute;
-import org.adsync4j.LdapAttributeResolver;
+import org.adsync4j.spi.LdapAttributeResolver;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;

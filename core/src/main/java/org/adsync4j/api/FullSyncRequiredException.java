@@ -1,4 +1,4 @@
-package org.adsync4j;
+package org.adsync4j.api;
 
 /**
  * Abstract class that is the base of more specific exceptions indicating error conditions during incremental synchronization.

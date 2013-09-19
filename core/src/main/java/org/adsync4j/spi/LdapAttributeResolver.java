@@ -11,7 +11,7 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.spi;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

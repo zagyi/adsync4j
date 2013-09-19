@@ -11,16 +11,15 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.spi;
 
 /**
- * Interface of a repository that is able to load and save a {@link DomainControllerAffiliation} instances working with an
- * arbitrary key type.
+ * Interface of a repository that is able to load and save {@link DomainControllerAffiliation} instances.
  * <p/>
  * <b>Important!</b>
  * Implementations must persist DCAs in the same physical database that stores the entries synchronized based on the DCA. This
  * is necessary to ensure that the DCA stays consistent with the synchronized entries in case the database is restored from a
- * backup.
+ * backup. This consistency ensures that an incremental synchronization will be enough after a local database restore operation.
  *
  * @param <KEY> The type of the key used to identify the stored DCAs.
  * @param <DCA_IMPL> The implementation class of the {@link DomainControllerAffiliation} interface.

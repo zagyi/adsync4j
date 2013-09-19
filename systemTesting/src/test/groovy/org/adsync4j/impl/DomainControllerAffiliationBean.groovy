@@ -13,7 +13,7 @@
  ***************************************************************************** */
 package org.adsync4j.impl
 
-import org.adsync4j.DomainControllerAffiliation
+import org.adsync4j.spi.DomainControllerAffiliation
 
 class DomainControllerAffiliationBean implements DomainControllerAffiliation {
     UUID invocationId

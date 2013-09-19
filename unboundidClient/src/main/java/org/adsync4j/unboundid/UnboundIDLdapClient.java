@@ -16,9 +16,9 @@ package org.adsync4j.unboundid;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.unboundid.ldap.sdk.*;
-import org.adsync4j.LdapAttributeResolver;
-import org.adsync4j.LdapClient;
-import org.adsync4j.LdapClientException;
+import org.adsync4j.spi.LdapAttributeResolver;
+import org.adsync4j.spi.LdapClient;
+import org.adsync4j.api.LdapClientException;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 
@@ -26,7 +26,7 @@ import javax.annotation.Nonnull;
 import java.util.UUID;
 
 import static com.google.common.collect.Iterables.toArray;
-import static org.adsync4j.UUIDUtils.bytesToUUID;
+import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 
 /**
  * This implementation of the {@link LdapClient} interface uses the UnboundID LDAP SDK to communicate with Active Directory.

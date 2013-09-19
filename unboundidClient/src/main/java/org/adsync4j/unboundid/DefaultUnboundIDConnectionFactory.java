@@ -17,7 +17,7 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPInterface;
-import org.adsync4j.LdapClientException;
+import org.adsync4j.api.LdapClientException;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;

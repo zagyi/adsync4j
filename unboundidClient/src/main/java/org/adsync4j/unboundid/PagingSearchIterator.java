@@ -16,7 +16,7 @@ package org.adsync4j.unboundid;
 import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
-import org.adsync4j.LdapClientException;
+import org.adsync4j.api.LdapClientException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

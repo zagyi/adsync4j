@@ -13,7 +13,7 @@
  ***************************************************************************** */
 package org.adsync4j.impl
 import com.unboundid.ldap.sdk.Attribute
-import org.adsync4j.EntryProcessor
+import org.adsync4j.spi.EntryProcessor
 import org.adsync4j.test.AbstractSystemSpec
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration

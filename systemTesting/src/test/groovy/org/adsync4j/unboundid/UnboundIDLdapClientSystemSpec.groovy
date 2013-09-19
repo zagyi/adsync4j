@@ -1,7 +1,7 @@
 package org.adsync4j.unboundid
 
 import com.unboundid.ldap.sdk.Attribute
-import org.adsync4j.UUIDUtils
+import org.adsync4j.impl.UUIDUtils
 import org.adsync4j.impl.ActiveDirectorySyncServiceImpl
 import org.adsync4j.impl.DomainControllerAffiliationBean
 import org.adsync4j.test.AbstractSystemSpec

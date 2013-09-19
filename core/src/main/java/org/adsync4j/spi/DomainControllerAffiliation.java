@@ -11,7 +11,7 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.spi;
 
 import java.util.List;
 import java.util.UUID;
@@ -62,7 +62,7 @@ public interface DomainControllerAffiliation {
      * because we must recognize if it changes on the server side (as a result of restoring the server-side database).
      *
      * @return The invocation ID of the Domain Controller.
-     * @see InvocationIdMismatchException
+     * @see org.adsync4j.api.InvocationIdMismatchException InvocationIdMismatchException
      */
     UUID getInvocationId();
 
@@ -79,7 +79,7 @@ public interface DomainControllerAffiliation {
     Long getHighestCommittedUSN();
 
     /**
-     * Setter for the Invocation ID. See the corresponding {@link org.adsync4j.DomainControllerAffiliation#getInvocationId()
+     * Setter for the Invocation ID. See the corresponding {@link DomainControllerAffiliation#getInvocationId()
      * getter} for a detailed description on what the Invocation ID is. Called by the
      * {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl syncrhronization service} after it retrieves the server's
      * Invocation ID during a {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl#fullSync full synchronization}.

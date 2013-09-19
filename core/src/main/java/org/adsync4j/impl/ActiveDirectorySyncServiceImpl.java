@@ -14,7 +14,11 @@
 package org.adsync4j.impl;
 
 import com.google.common.collect.Lists;
-import org.adsync4j.*;
+import org.adsync4j.api.ActiveDirectorySyncService;
+import org.adsync4j.api.InitialFullSyncRequiredException;
+import org.adsync4j.api.InvocationIdMismatchException;
+import org.adsync4j.api.LdapClientException;
+import org.adsync4j.spi.*;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
@@ -24,24 +28,26 @@ import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.concat;
 import static java.util.Arrays.asList;
-import static org.adsync4j.UUIDUtils.bytesToUUID;
+import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAttribute.*;
 
 /**
  * Implementation of the main service interface of ADSync4J.
  * <p/>
- * As the construction of instances of this class is cheap, each {@link DomainControllerAffiliation} (DCA) you want to use
- * requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However, instead of directly setting the DCA, clients
- * need to provide a repository of DCAs and the key identifying the specific DCA based on which synchronization is to be
- * carried out. (See the {@link ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}). This indirection
- * makes it possible to relieve clients of the responsibility to update the highest committed Update Sequence  Number in the
- * DCA and to persist the updated record, which is essential for the correct functioning of synchronization operations.
+ * As the construction of instances of this class is cheap, each {@link org.adsync4j.spi.DomainControllerAffiliation} (DCA) you
+ * want to use requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However,
+ * instead of directly setting the DCA, clients need to provide a repository of DCAs and the key identifying the specific DCA
+ * based on which synchronization is to be carried out. (See the {@link
+ * ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}). This indirection makes it possible to relieve
+ * clients of the responsibility to update the highest committed Update Sequence  Number in the DCA and to persist the updated
+ * record, which is essential for the correct functioning of synchronization operations.
  * <p/>
  * This class defines a number of type parameters which are required, so that clients can:
  * <ul>
- * <li>provide their own implementation of the {@link DomainControllerAffiliation} interface (e.g. a JPA entity),</li>
+ * <li>provide their own implementation of the {@link org.adsync4j.spi.DomainControllerAffiliation} interface (e.g. a JPA
+ * entity),</li>
  * <li>freely choose an arbitrary key type for the repository storing DCAs,</li>
- * <li>pick an LDAP SDK to use for implementing the {@link LdapClient} interface.</li>
+ * <li>pick an LDAP SDK to use for implementing the {@link org.adsync4j.spi.LdapClient} interface.</li>
  * </ul>
  * <p/>
  * <b>Important!</b>
@@ -51,8 +57,9 @@ import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAt
  * This class is NOT thread-safe.
  *
  * @param <DCA_KEY>        Type of the key used in the provided DCA repository.
- * @param <DCA_IMPL>       The implementation class of the {@link DomainControllerAffiliation} used the provided DCA repository.
- * @param <LDAP_ATTRIBUTE> The LDAP attribute type determined by the {@link LdapClient} implementation in use.
+ * @param <DCA_IMPL>       The implementation class of the {@link org.adsync4j.spi.DomainControllerAffiliation} used the
+ *                         provided DCA repository.
+ * @param <LDAP_ATTRIBUTE> The LDAP attribute type determined by the {@link org.adsync4j.spi.LdapClient} implementation in use.
  */
 @NotThreadSafe
 public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainControllerAffiliation, LDAP_ATTRIBUTE>

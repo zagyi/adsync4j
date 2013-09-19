@@ -17,7 +17,7 @@ import com.google.common.collect.Lists
 import com.unboundid.asn1.ASN1OctetString
 import com.unboundid.ldap.sdk.*
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl
-import org.adsync4j.LdapClientException
+import org.adsync4j.api.LdapClientException
 import spock.lang.Specification
 
 import static org.adsync4j.unboundid.UnboundIDTestHelper.*
