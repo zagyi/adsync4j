@@ -49,4 +49,7 @@ public class LdapClientException extends RuntimeException {
     public LdapClientException(Throwable e) {
         super(e);
     }
+
+    public LdapClientException() {
+    }
 }

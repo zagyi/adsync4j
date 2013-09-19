@@ -207,9 +207,12 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
         long remoteHighestCommittedUSN = retrieveRemoteHighestCommittedUSN();
 
         // delegate to the specific sync operation
-        syncOperation.execute(remoteHighestCommittedUSN, entryProcessor);
+        try {
+            syncOperation.execute(remoteHighestCommittedUSN, entryProcessor);
+        } finally {
+            _ldapClient.closeConnection();
+        }
 
-        _ldapClient.closeConnection();
         _dcAffiliation.setHighestCommittedUSN(remoteHighestCommittedUSN);
         _dcAffiliation = _affiliationRepository.save(_dcAffiliation);
         return remoteHighestCommittedUSN;

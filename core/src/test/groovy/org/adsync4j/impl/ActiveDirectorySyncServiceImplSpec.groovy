@@ -67,6 +67,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         then:
         interaction { highestCommittedUSNIsRetrieved() }
         thrown InitialFullSyncRequiredException
+        1* ldapClient.closeConnection()
     }
 
     def 'prevent incremental sync if no local Highest Committed USN is stored'() {
@@ -83,6 +84,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         then:
         interaction { highestCommittedUSNIsRetrieved() }
         thrown InitialFullSyncRequiredException
+        1* ldapClient.closeConnection()
     }
 
     def 'prevent incremental sync if local InvocationId does not match the remote one'() {
@@ -102,6 +104,7 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
             invocationIdIsRetrieved()
         }
         thrown InvocationIdMismatchException
+        1* ldapClient.closeConnection()
     }
 
     def 'allow incremental sync if local InvocationId matches the remote one'() {
