@@ -18,6 +18,8 @@ import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPInterface;
 import org.adsync4j.api.LdapClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -30,6 +32,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @NotThreadSafe
 public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnectionFactory {
+
+    private final static Logger LOG = LoggerFactory.getLogger(DefaultUnboundIDConnectionFactory.class);
 
     private final String _protocol;
     private final String _host;
@@ -65,6 +69,7 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
         try {
             checkArgument("ldap".equals(_protocol),
                     "This connection factory supports only the creation of unsecured ldap:// connections.");
+            LOG.debug("Opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
             LDAPConnection connection = new LDAPConnection(_ldapConnectionOptions, _host, _port, _bindUser, _bindPassword);
             return PagingLdapConnectionImpl.wrap(connection);
         } catch (LDAPException e) {
@@ -74,6 +79,7 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
 
     @Override
     public void closeConnection(PagingLdapConnection connection) {
+        LOG.debug("Closing LDAP connection.");
         getLdapConnection(connection).close();
     }
 
@@ -82,6 +88,7 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
         LDAPConnection ldapConnection = getLdapConnection(connection);
         if (!ldapConnection.isConnected()) {
             try {
+                LOG.debug("Re-opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
                 ldapConnection.reconnect();
             } catch (LDAPException e) {
                 throw new LdapClientException(e);

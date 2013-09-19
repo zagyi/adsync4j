@@ -17,6 +17,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.InvocationHandler;
@@ -40,10 +42,11 @@ import java.util.Set;
 @ThreadSafe
 public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler {
 
-    private final LDAPInterface _delegateConnection;
-
-    private static final Set<Method> PAGING_LDAP_SEARCHER_METHODS =
+    private final static Logger LOG = LoggerFactory.getLogger(PagingLdapConnectionImpl.class);
+    private final static Set<Method> PAGING_LDAP_SEARCHER_METHODS =
             ImmutableSet.copyOf(PagingLdapSearcher.class.getDeclaredMethods());
+
+    private final LDAPInterface _delegateConnection;
 
     /**
      * Wraps the provided {@link LDAPInterface} in order to make {@link PagingLdapSearcher} methods available.
@@ -70,6 +73,7 @@ public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationH
     @Override
     public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) throws LDAPException {
         searchRequest.setControls(new SimplePagedResultsControl(pageSize, null));
+        LOG.debug("Requesting first page of results for search request: {}", searchRequest);
         final SearchResult firstPage = _delegateConnection.search(searchRequest);
 
         Iterable<List<SearchResultEntry>> pages =

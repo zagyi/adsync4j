@@ -59,8 +59,8 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
 
             Attribute rootDSEAttribute = rootDSE.getAttribute(attribute);
             LdapClientException.throwIfNull(rootDSEAttribute, "Could not retrieve attribute '%s' of the root DSE.", attribute);
-            LOG.trace("Retrieved Root DSE attribute: {} = {}", attribute, rootDSEAttribute);
 
+            LOG.debug("Successfully retrieved root DSE attribute: {}", rootDSEAttribute);
             return rootDSEAttribute;
         } catch (LDAPException e) {
             throw new LdapClientException(e);
@@ -76,6 +76,8 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
             Attribute attribute = entry.getAttribute(attributeName);
             LdapClientException.throwIfNull(attribute,
                     "Expected attribute '%s' on entry '%s' is missing.", entryDN, attributeName);
+
+            LOG.debug("Successfully retrieved attribute: {}", attribute);
             return attribute;
         } catch (LDAPException e) {
             throw new LdapClientException(e);

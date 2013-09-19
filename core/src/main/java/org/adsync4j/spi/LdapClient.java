@@ -23,8 +23,8 @@ import java.util.UUID;
  * {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl ActiveDirectorySyncServiceImpl}.
  * <p/>
  * Implementations are free to use any LDAP SDK available for Java to implement this interface. Each of these SDKs define a
- * specific type to represent an LDAP attribute (e.g. it's {@link javax.naming.directory.Attribute} in case of JNDI,
- * or {@link com.unboundid.ldap.sdk.Attribute} in case of the UnboundID LDAP SDK, etc). However,
+ * specific type to represent an LDAP attribute (e.g. it's {@code javax.naming.directory.Attribute} in case of JNDI,
+ * or {@code com.unboundid.ldap.sdk.Attribute} in case of the UnboundID LDAP SDK, etc). However,
  * callers of this interface can not possibly be prepared to deal with all the different attribute types. In order to be
  * able to leave the decision to the implementations which LDAP SDK to use, some indirection had to be introduced here.
  * Therefore a type parameter is defined for the SDK specific attribute type, and implementations will have to provide an

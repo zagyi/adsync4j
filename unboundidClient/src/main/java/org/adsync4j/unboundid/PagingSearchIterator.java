@@ -17,6 +17,8 @@ import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
 import org.adsync4j.api.LdapClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,12 +39,15 @@ import static com.unboundid.ldap.sdk.controls.SimplePagedResultsControl.PAGED_RE
  */
 public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
 
+    private final static Logger LOG = LoggerFactory.getLogger(PagingSearchIterator.class);
+
     private final LDAPInterface _connection;
     private final SearchRequest _searchRequest;
     private final int _pageSize;
 
-    List<SearchResultEntry> _firstPage;
+    @Nullable
     ASN1OctetString _pagingCookie = null;
+    List<SearchResultEntry> _firstPage;
 
     /**
      * @param connection    The connection on which the search request is to be executed.
@@ -55,6 +60,8 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
         _pageSize = getPageSize(searchRequest);
         _firstPage = firstResult.getSearchEntries();
         _pagingCookie = getPagingCookieForNextIteration(firstResult);
+        LOG.debug("Instance created with an initial search result that indicates there will {}be more pages.",
+                _pagingCookie == null ? "NO " : "");
     }
 
     /**
@@ -117,8 +124,11 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
     private List<SearchResultEntry> fetchNextPage() {
         _searchRequest.replaceControl(new SimplePagedResultsControl(_pageSize, _pagingCookie));
         try {
+            LOG.debug("Fetching subsequent result page.");
             SearchResult searchResult = _connection.search(_searchRequest);
             _pagingCookie = getPagingCookieForNextIteration(searchResult);
+            LOG.debug("Search result page received, response indicates it's {} page.",
+                    _pagingCookie == null ? "the FINAL" : "an intermediate");
             return searchResult.getSearchEntries();
         } catch (LDAPSearchException e) {
             throw new LdapClientException(e);

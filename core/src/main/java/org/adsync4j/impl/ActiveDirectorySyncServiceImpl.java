@@ -19,6 +19,8 @@ import org.adsync4j.api.InitialFullSyncRequiredException;
 import org.adsync4j.api.InvocationIdMismatchException;
 import org.adsync4j.api.LdapClientException;
 import org.adsync4j.spi.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
@@ -28,8 +30,8 @@ import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.concat;
 import static java.util.Arrays.asList;
-import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAttribute.*;
+import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 
 /**
  * Implementation of the main service interface of ADSync4J.
@@ -64,6 +66,8 @@ import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAt
 @NotThreadSafe
 public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainControllerAffiliation, LDAP_ATTRIBUTE>
         implements ActiveDirectorySyncService<LDAP_ATTRIBUTE> {
+
+    private final static Logger LOG = LoggerFactory.getLogger(ActiveDirectorySyncServiceImpl.class);
 
     protected final DCA_KEY _dcaKey;
     protected final DCARepository<DCA_KEY, DCA_IMPL> _affiliationRepository;
@@ -215,11 +219,14 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
 
         _dcAffiliation.setHighestCommittedUSN(remoteHighestCommittedUSN);
         _dcAffiliation = _affiliationRepository.save(_dcAffiliation);
+        LOG.debug("Updated Domain Controller Affiliation record: {}", _dcAffiliation);
+
         return remoteHighestCommittedUSN;
     }
 
     void reloadAffiliation() {
         _dcAffiliation = _affiliationRepository.load(_dcaKey);
+        LOG.debug("Loaded Domain Controller Affiliation record: {}", _dcAffiliation);
         checkArgument(_dcAffiliation != null,
                 "No Domain Controller Affiliation record is found in the repository with key: ", _dcaKey);
     }

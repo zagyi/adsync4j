@@ -23,7 +23,7 @@ import java.util.List;
  * <p/>
  * {@link LdapClient} implementations are free to use any LDAP SDK available for Java to implement the {@link LdapClient}
  * interface. Each of these SDKs define a specific type to represent an LDAP attribute E.g. it's
- * {@link javax.naming.directory.Attribute} in case of JNDI, or {@link com.unboundid.ldap.sdk.Attribute} in case of the
+ * {@code javax.naming.directory.Attribute} in case of JNDI, or {@code com.unboundid.ldap.sdk.Attribute} in case of the
  * UnboundID LDAP SDK, etc. Since callers of the {@link LdapClient} interface can not possibly be prepared to deal with all the
  * different attribute types, an auxiliary class is needed that helps to interpret the SDK specific attribute type. This is
  * exactly what this type is defined for.
