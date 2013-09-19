@@ -133,17 +133,15 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
      *         {@code null} otherwise.
      */
     @Nullable
-    /*package*/ ASN1OctetString getPagingCookieForNextIteration(@Nonnull SearchResult searchResult) {
+    /*package*/ static ASN1OctetString getPagingCookieForNextIteration(@Nonnull SearchResult searchResult) {
         try {
             SimplePagedResultsControl pagedCtrlResponse = SimplePagedResultsControl.get(searchResult);
-            return pagedCtrlResponse == null
-                   ? null
-                   : pagedCtrlResponse.getCookie();
-
+            ASN1OctetString pagingCookie = pagedCtrlResponse == null ? null : pagedCtrlResponse.getCookie();
+            return pagingCookie == null ? null :
+                   pagingCookie.getValueLength() == 0 ? null : pagingCookie;
         } catch (LDAPException e) {
             throw new LdapClientException(e);
         }
-
     }
 
     @Override

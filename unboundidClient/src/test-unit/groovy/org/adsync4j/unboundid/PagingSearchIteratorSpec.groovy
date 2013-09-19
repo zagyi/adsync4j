@@ -130,21 +130,18 @@ class PagingSearchIteratorSpec extends Specification {
         given:
         Control[] controls = pagingCtrl ? [pagingCtrl] : []
         def searchResult = new SearchResult(-1, null, null, null, null, 0, 0, controls)
-        def psi = new PagingSearchIterator(null, DUMMY_SEARCH_REQUEST, createSearchResult(['page1:entry1'], true))
 
-        expect:
-        def cookie = psi.getPagingCookieForNextIteration(searchResult)
-        if (cookie) {
-            expectedCookieLength == cookie.valueLength
-        } else {
-            expectedCookieLength == null
-        }
+        when:
+        def cookie = PagingSearchIterator.getPagingCookieForNextIteration(searchResult)
+
+        then:
+        cookie == expectedCookie
 
         where:
-        pagingCtrl                                                      | expectedCookieLength
-        new SimplePagedResultsControl(PAGE_SIZE, PAGING_COOKIE)         | PAGING_COOKIE.valueLength
-        new SimplePagedResultsControl(PAGE_SIZE, new ASN1OctetString()) | 0
-        new SimplePagedResultsControl(PAGE_SIZE, null)                  | 0
+        pagingCtrl                                                      | expectedCookie
+        new SimplePagedResultsControl(PAGE_SIZE, PAGING_COOKIE)         | PAGING_COOKIE
+        new SimplePagedResultsControl(PAGE_SIZE, new ASN1OctetString()) | null
+        new SimplePagedResultsControl(PAGE_SIZE, null)                  | null
         null                                                            | null
     }
 
