@@ -13,6 +13,7 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
@@ -24,6 +25,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation of {@link PagingLdapSearcher} that can be used in two different ways:
@@ -37,7 +39,11 @@ import java.util.List;
  */
 @ThreadSafe
 public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler {
+
     private final LDAPInterface _delegateConnection;
+
+    private static final Set<Method> PAGING_LDAP_SEARCHER_METHODS =
+            ImmutableSet.copyOf(PagingLdapSearcher.class.getDeclaredMethods());
 
     /**
      * Wraps the provided {@link LDAPInterface} in order to make {@link PagingLdapSearcher} methods available.
@@ -76,26 +82,47 @@ public class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationH
         return Iterables.concat(pages);
     }
 
-    /**
-     * @return The wrapped connection.
-     */
-    /*package*/ LDAPInterface getDelegateConnection() {
+    @Override
+    public LDAPInterface getDelegateConnection() {
         return _delegateConnection;
     }
 
+    /**
+     * Invocation handler that dispatches method calls to the delegate connection,
+     * unless it's a call to {@link PagingLdapSearcher} that is dispatched to {@code this}.
+     */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getName().equals("search")
-            && args.length == 2
-            && args[0] instanceof SearchRequest
-            && args[1] instanceof Integer) {
-            return search((SearchRequest) args[0], (int) args[1]);
+        if (PAGING_LDAP_SEARCHER_METHODS.contains(method)) {
+            return invokeThrowingUnwrappedException(this, method, args);
         } else {
-            try {
-                return method.invoke(_delegateConnection, args);
-            } catch (InvocationTargetException e) {
-                throw e.getCause();
-            }
+            return invokeThrowingUnwrappedException(_delegateConnection, method, args);
+        }
+    }
+
+    /**
+     * Indirect method calls (done through reflection) may throw a {@link InvocationTargetException} that wraps the original
+     * exception which might have been thrown by the indirectly invoked method. Invocation handlers ({@link
+     * InvocationHandler#invoke InvocationHandler.invoke()}) of a dynamic {@link Proxy} must unwrap the original exception before
+     * rethrowing it, because carelessly rethrowing the wrapper {@link InvocationTargetException} will result in a
+     * {@link java.lang.reflect.UndeclaredThrowableException UndeclaredThrowableException}. That's because the {@link
+     * InvocationTargetException} is a checked exception which is normally not declared in the throws clause of the proxied
+     * methods.
+     * <p/>
+     * This helper method performs an indirect method call, and re-throws the <b>unwrapped</b> original exception if the
+     * invocation of the target method failed.
+     *
+     * @param object The object to dispatch the method call to.
+     * @param method The method to invoke on the object.
+     * @param args   Arguments used for the method call.
+     * @return The result of the indirect method invocation.
+     * @throws Throwable Any exception that the target method might have thrown.
+     */
+    private static Object invokeThrowingUnwrappedException(Object object, Method method, Object[] args) throws Throwable {
+        try {
+            return method.invoke(object, args);
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
         }
     }
 }

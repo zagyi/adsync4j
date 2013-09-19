@@ -91,19 +91,17 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
     }
 
     /**
-     * Since {@link LDAPInterface} hides the implementation's {@link LDAPConnection#close() close()} and {@link
-     * LDAPConnection#reconnect() reconnect()} methods (but why?), we need this clumsy method to get hold on the underlying
-     * implementation.
+     * Since {@link LDAPInterface} does not expose the implementation's {@link LDAPConnection#close() close()} and {@link
+     * LDAPConnection#reconnect() reconnect()} methods (but why?), we need this clumsy helper method to get hold on the
+     * underlying implementation.
      */
     private LDAPConnection getLdapConnection(PagingLdapConnection connection) {
-        if (connection instanceof PagingLdapConnectionImpl) {
-            LDAPInterface delegateConnection = ((PagingLdapConnectionImpl) connection).getDelegateConnection();
-            if (delegateConnection instanceof LDAPConnection) {
-                return ((LDAPConnection) delegateConnection);
-            }
+        LDAPInterface delegateConnection = connection.getDelegateConnection();
+        if (delegateConnection instanceof LDAPConnection) {
+            return ((LDAPConnection) delegateConnection);
         }
         throw new IllegalArgumentException(
-                "Provided collection must be of type PagingLdapConnectionImpl wrapping an LDAPConnection.");
+                "Expected an instance of " + LDAPConnection.class.getName() +
+                ", but found a " + delegateConnection.getClass().getName());
     }
-
 }

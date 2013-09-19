@@ -1,6 +1,7 @@
 package org.adsync4j.unboundid;
 
 import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPInterface;
 import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 
@@ -22,4 +23,9 @@ public interface PagingLdapSearcher {
      *
      */
     Iterable<SearchResultEntry> search(SearchRequest searchRequest, int pageSize) throws LDAPException;
+
+    /**
+     * @return The underlying LDAP connection that implementations delegate to.
+     */
+    LDAPInterface getDelegateConnection();
 }
