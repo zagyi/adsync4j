@@ -21,7 +21,7 @@ import java.util.UUID;
 public class UUIDUtils {
 
     /**
-     * Microsoft stores GUIDs in a binary format that differs from the RFC standard of UUIDs (RFC #4122). (See detgails
+     * Microsoft stores GUIDs in a binary format that differs from the RFC standard of UUIDs (RFC #4122). (See details
      * at http://en.wikipedia.org/wiki/Globally_unique_identifier) This function takes a byte array read from Active
      * Directory and correctly decodes it as a {@link UUID} object.
      *
