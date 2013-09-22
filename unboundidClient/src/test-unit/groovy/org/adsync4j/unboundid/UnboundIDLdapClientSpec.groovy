@@ -192,6 +192,7 @@ class UnboundIDLdapClientSpec extends Specification {
     def 'all methods propagate ldap exception'() {
         given:
         def client = new UnboundIDLdapClient({ connection } as PagingUnboundIDConnectionFactory)
+        connection.isConnected() >> true
         connection._ >> { throw new LDAPException(ResultCode.TIMEOUT) }
 
         when:

@@ -1,9 +1,9 @@
 package org.adsync4j.unboundid
 
 import com.unboundid.ldap.sdk.Attribute
-import org.adsync4j.impl.UUIDUtils
 import org.adsync4j.impl.ActiveDirectorySyncServiceImpl
 import org.adsync4j.impl.DomainControllerAffiliationBean
+import org.adsync4j.impl.UUIDUtils
 import org.adsync4j.test.AbstractSystemSpec
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration

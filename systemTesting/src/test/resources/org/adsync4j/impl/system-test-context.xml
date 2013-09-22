@@ -74,7 +74,7 @@
         <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
               c:connectionFactory-ref="connectionFactory"/>
 
-        <bean id="connectionFactory" class="org.adsync4j.test.EmbeddedUnboundIDServerConnectionFactory"
+        <bean id="connectionFactory" class="org.adsync4j.unboundid.EmbeddedUnboundIDServerConnectionFactory"
               c:embeddedLdapServer-ref="embeddedServer"/>
     </beans>
 </beans>

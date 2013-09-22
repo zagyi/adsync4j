@@ -15,7 +15,22 @@ abstract class AbstractSystemSpec extends Specification {
     def testFixtures
 
     def setup() {
+        waitIfNecessary()
+
         URL testFixturesURL = getResourceURL(testFixturesName ?: DEFAULT_TEST_FIXTURES)
         testFixtures = new ConfigSlurper().parse(testFixturesURL)
+
+//        Uncomment if you need debug log messages related to LDAP communication.
+//        Debug.setIncludeStackTrace(true);
+//        Debug.setEnabled(true);
+    }
+
+    /**
+     * Scandal!!! See comment on {@link org.adsync4j.unboundid.PagingLdapConnectionTestImpl} for details.
+     */
+    def waitIfNecessary() {
+        if (System.properties.getProperty('delayTests') != null) {
+            Thread.sleep(1000)
+        }
     }
 }

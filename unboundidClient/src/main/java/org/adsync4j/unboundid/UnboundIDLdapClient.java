@@ -187,14 +187,32 @@ public class UnboundIDLdapClient implements LdapClient<Attribute> {
     @Override
     public void closeConnection() {
         if (_connection != null) {
-            _connectionFactory.closeConnection(_connection);
+            LOG.debug("Closing the LDAP connection.");
+            _connection.close();
         }
     }
 
+    /**
+     * Creates a new connection on the first invocation and caches it. Before returning the cached instance on subsequent
+     * invocations, it checks if the connection is open, an calls reconnect() in case it's not.
+     */
     private PagingLdapConnection getConnection() {
         if (_connection == null) {
             _connection = _connectionFactory.createConnection();
+        } else {
+            if (!_connection.isConnected()) {
+                try {
+                    LOG.debug("Re-opening the LDAP connection.");
+                    _connection.reconnect();
+                } catch (LDAPException e) {
+                    // TODO: the 3rd synchronization operation within 1 second will end up here...
+                    // because the sync operation always closes the connection, and the time check
+                    // in reconnect() will cause the second reconnect() to fail with an exception
+                    throw new LdapClientException(e);
+                }
+            }
         }
-        return _connectionFactory.ensureConnection(_connection);
+
+        return _connection;
     }
 }

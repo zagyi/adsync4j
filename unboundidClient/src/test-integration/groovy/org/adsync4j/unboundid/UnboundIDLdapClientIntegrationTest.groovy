@@ -107,7 +107,7 @@ class UnboundIDLdapClientIntegrationTest {
     }
 
     static def createConnection(EmbeddedUnboundIDLdapServer server) {
-        PagingLdapConnectionImpl.wrap(new LDAPConnection('localhost', server.port))
+        new PagingLdapConnectionImpl(new LDAPConnection('localhost', server.port))
     }
 
     static def createClient(LDAPInterface connection) {

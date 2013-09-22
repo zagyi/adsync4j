@@ -16,7 +16,6 @@ package org.adsync4j.unboundid;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPInterface;
 import org.adsync4j.api.LdapClientException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +61,7 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
 
     /**
      * Creates an {@link LDAPConnection} based on the information passed at creation time, and wraps it in a
-     * {@link PagingLdapConnectionImpl} that implements the paging search operation.
+     * {@link PagingLdapConnection} implementation that adds the paging search operation.
      */
     @Override
     public PagingLdapConnection createConnection() throws LdapClientException {
@@ -70,45 +69,11 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
             checkArgument("ldap".equals(_protocol),
                     "This connection factory supports only the creation of unsecured ldap:// connections.");
             LOG.debug("Opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
+
             LDAPConnection connection = new LDAPConnection(_ldapConnectionOptions, _host, _port, _bindUser, _bindPassword);
-            return PagingLdapConnectionImpl.wrap(connection);
+            return new PagingLdapConnectionImpl(connection);
         } catch (LDAPException e) {
             throw new LdapClientException(e);
         }
-    }
-
-    @Override
-    public void closeConnection(PagingLdapConnection connection) {
-        LOG.debug("Closing LDAP connection.");
-        getLdapConnection(connection).close();
-    }
-
-    @Override
-    public PagingLdapConnection ensureConnection(PagingLdapConnection connection) throws LdapClientException {
-        LDAPConnection ldapConnection = getLdapConnection(connection);
-        if (!ldapConnection.isConnected()) {
-            try {
-                LOG.debug("Re-opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
-                ldapConnection.reconnect();
-            } catch (LDAPException e) {
-                throw new LdapClientException(e);
-            }
-        }
-        return connection;
-    }
-
-    /**
-     * Since {@link LDAPInterface} does not expose the implementation's {@link LDAPConnection#close() close()} and {@link
-     * LDAPConnection#reconnect() reconnect()} methods (but why?), we need this clumsy helper method to get hold on the
-     * underlying implementation.
-     */
-    private LDAPConnection getLdapConnection(PagingLdapConnection connection) {
-        LDAPInterface delegateConnection = connection.getDelegateConnection();
-        if (delegateConnection instanceof LDAPConnection) {
-            return ((LDAPConnection) delegateConnection);
-        }
-        throw new IllegalArgumentException(
-                "Expected an instance of " + LDAPConnection.class.getName() +
-                ", but found a " + delegateConnection.getClass().getName());
     }
 }

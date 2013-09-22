@@ -47,7 +47,7 @@ class ActiveDirectorySyncServiceImplSystemSpec extends AbstractSystemSpec {
         entry.collect { attribute -> attribute?.value }.join('|')
     }
 
-    public def setup() {
+    def setup() {
         EXISTING_USERS = testFixtures.existing.collect { it.join('|') } as Set
         CHANGED_USERS = testFixtures.changed.collect { it.join('|') } as Set
         INSERTED_USERS = testFixtures.inserted.collect { it.join('|') } as Set

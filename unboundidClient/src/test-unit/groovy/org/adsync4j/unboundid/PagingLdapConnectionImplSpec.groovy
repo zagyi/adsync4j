@@ -26,7 +26,7 @@ class PagingLdapConnectionImplSpec extends Specification {
 
     def 'should delegate LDAPInterface methods'() {
         given:
-        PagingLdapConnection pagingConnection = PagingLdapConnectionImpl.wrap(nonPagingConnection)
+        PagingLdapConnectionImpl pagingConnection = new PagingLdapConnectionImpl(nonPagingConnection)
 
         when:
         // checking just a few methods
@@ -43,7 +43,7 @@ class PagingLdapConnectionImplSpec extends Specification {
     def 'paging search returns all pages '() {
         given:
         List pages = [['page1/1', 'page1/2'], ['page2/1']]
-        PagingLdapConnection pagingConnection = buildPagingLdapConnection(pages)
+        PagingLdapConnectionImpl pagingConnection = buildPagingLdapConnection(pages)
 
         when:
         List entries = pagingConnection.search(DUMMY_SEARCH_REQUEST, PAGE_SIZE).collect()
@@ -56,7 +56,7 @@ class PagingLdapConnectionImplSpec extends Specification {
         given:
         // emulating a time-out on getEntry()
         nonPagingConnection.getEntry(_) >> { throw new LDAPException(ResultCode.TIMEOUT) }
-        PagingLdapConnection pagingConnection = PagingLdapConnectionImpl.wrap(nonPagingConnection)
+        PagingLdapConnectionImpl pagingConnection = new PagingLdapConnectionImpl(nonPagingConnection)
 
         when:
         pagingConnection.getEntry('foo')
@@ -65,7 +65,7 @@ class PagingLdapConnectionImplSpec extends Specification {
         thrown LDAPException
     }
 
-    PagingLdapConnection buildPagingLdapConnection(List pages) {
+    PagingLdapConnectionImpl buildPagingLdapConnection(List pages) {
         def listOfSearchEntryLists = createPagedSearchResults(pages)
 
         // first invocation should not have a paging cookie
@@ -82,6 +82,6 @@ class PagingLdapConnectionImplSpec extends Specification {
         // interactions other than those explicitly specified in feature methods will be reported as errors
         0 * nonPagingConnection.search(_)
 
-        PagingLdapConnectionImpl.wrap(nonPagingConnection)
+        new PagingLdapConnectionImpl(nonPagingConnection)
     }
 }

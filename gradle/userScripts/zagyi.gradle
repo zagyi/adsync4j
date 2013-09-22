@@ -19,6 +19,7 @@ systemTesting.tasks.create(
             '-Dspring.profiles.active=realActiveDirectory',
             "-DadPropertiesLocation=file://$dir/active-directory.properties",
             "-DtestFixtures=file://$dir/testFixtures.groovycfg",
+            "-DdelayTests", // painful workaround to avoid exception from LDAPConnection.reconnect()
     ])
 }
 
