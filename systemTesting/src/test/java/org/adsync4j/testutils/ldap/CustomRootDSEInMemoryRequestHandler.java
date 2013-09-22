@@ -60,7 +60,8 @@ public class CustomRootDSEInMemoryRequestHandler extends InMemoryRequestHandler 
 
                 rootDSEEntry.addAttribute(attributeName, attributeValue);
 
-                Debug.getLogger().info(String.format("Added extended Root DSE attribute: %s = %s", attributeName, attributeValue));
+                Debug.getLogger().finer(
+                        String.format("Added extended Root DSE attribute: %s = %s", attributeName, attributeValue));
             }
         }
     }

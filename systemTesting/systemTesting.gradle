@@ -42,6 +42,7 @@ addDependencies(prj, [
         ],
 
         testRuntime: [
+                Libs.logback,
                 Libs.slf4jBridgeJUL,
                 Libs.slf4jBridgeJCL,
         ],

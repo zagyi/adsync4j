@@ -60,7 +60,7 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
         _pageSize = getPageSize(searchRequest);
         _firstPage = firstResult.getSearchEntries();
         _pagingCookie = getPagingCookieForNextIteration(firstResult);
-        LOG.debug("Instance created with an initial search result that indicates there will {}be more pages.",
+        LOG.debug("Instance created with an initial search result that indicates there will be {}more pages.",
                 _pagingCookie == null ? "NO " : "");
     }
 

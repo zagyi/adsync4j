@@ -92,10 +92,16 @@ rootPrj.with {
 
 def customizeTestTasks(Project prj) {
     prj.tasks.withType(Test) { Test test ->
+        // optionally enable log messages emitted by tests to appear in Gradle's output
+        if (System.getProperty('testLogs') != null) {
+            test.testLogging.showStandardStreams = true
+        }
+
         // optionally start the test jvm with a debugger attached
         if (System.getProperty('debug') != null) {
             test.jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
         }
+
         // propagate system properties from Gradle JVM to the forked test JVM
         test.systemProperties = System.getProperties() as Map<String, ?>
     }
