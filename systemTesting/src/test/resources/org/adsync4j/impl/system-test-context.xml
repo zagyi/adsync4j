@@ -18,7 +18,9 @@
         <constructor-arg name="ldapClient" ref="ldapClient"/>
     </bean>
 
+    <!-- url defaults to empty string (not needed for the embedded server) -->
     <bean id="domainControllerAffiliation" class="org.adsync4j.impl.DomainControllerAffiliationBean"
+          p:url="${url:}"
           p:rootDN="${rootDN}"
           p:invocationId="${invocationId}"
           p:highestCommittedUSN="${highestCommittedUSN}"
@@ -38,12 +40,11 @@
               c:connectionFactory-ref="connectionFactory"/>
 
         <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
-              c:protocol="${protocol}"
-              c:host="${host}"
-              c:port="${port}"
+              c:affiliationRepository-ref="dcaHolder"
+              c:dcaKey="bar"
               c:bindUser="${bindUser}"
               c:bindPassword="${bindPassword}"
-              c:connectionOptions-ref="connectionOptions">
+              p:ldapConnectionOptions-ref="connectionOptions">
         </bean>
     </beans>
 

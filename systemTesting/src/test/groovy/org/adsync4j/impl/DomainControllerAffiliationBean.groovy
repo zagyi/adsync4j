@@ -16,6 +16,10 @@ package org.adsync4j.impl
 import org.adsync4j.spi.DomainControllerAffiliation
 
 class DomainControllerAffiliationBean implements DomainControllerAffiliation {
+    String url
+    String bindUser
+    String bindPassword
+
     UUID invocationId
     Long highestCommittedUSN
 

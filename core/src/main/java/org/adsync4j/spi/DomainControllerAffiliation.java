@@ -31,6 +31,21 @@ import java.util.UUID;
 public interface DomainControllerAffiliation {
 
     /**
+     * @return The URL of the Domain Controller.
+     */
+    String getUrl();
+
+    /**
+     * @return The user name to authenticate with.
+     */
+    String getBindUser();
+
+    /**
+     * @return The password to use on authentication.
+     */
+    String getBindPassword();
+
+    /**
      * @return DN of the root entry of the Active Directory tree (e.g. {@code DC=example,DC=com}).
      */
     String getRootDN();
@@ -42,7 +57,7 @@ public interface DomainControllerAffiliation {
     String getSyncBaseDN();
 
     /**
-     * @return LDAP filter expression to use when searching for entries during synchronization.
+     * @return LDAP filter expression that determines which entries should be retrieved during synchronization.
      */
     String getSearchFilter();
 

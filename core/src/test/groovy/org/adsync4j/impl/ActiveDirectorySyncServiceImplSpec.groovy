@@ -266,9 +266,8 @@ class ActiveDirectorySyncServiceImplSpec extends Specification {
         String searchDeletedObjectsFilter = 'searchDeletedObjects=filter'
         String rootDN = 'rootDN'
         String syncBaseDN = 'syncBaseDN'
-        String protocol = 'protocol'
-        String host = 'host'
-        int port = -1
+
+        String url = 'foo'
         String bindUser = 'bindUser'
         String bindPassword = 'bindPassword'
 
