@@ -37,7 +37,7 @@ public class PagingLdapConnectionImpl extends AbstractUnboundIDLdapConnectionDec
      *
      * @param delegateConnection The connection to delegate to.
      */
-    public PagingLdapConnectionImpl(UnboundIDLdapConnection delegateConnection) {
+    public PagingLdapConnectionImpl(LDAPConnection delegateConnection) {
         super(delegateConnection);
     }
 

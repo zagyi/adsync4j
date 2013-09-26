@@ -17,46 +17,67 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionOptions;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.adsync4j.api.LdapClientException;
+import org.adsync4j.spi.DCARepository;
+import org.adsync4j.spi.DomainControllerAffiliation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
-
-import static com.google.common.base.Preconditions.checkArgument;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A simple implementation of {@link PagingUnboundIDConnectionFactory} that creates an unsecured connection with the provided
  * parameters.
  */
 @NotThreadSafe
-public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnectionFactory {
+public class DefaultUnboundIDConnectionFactory<DCA_KEY> implements PagingUnboundIDConnectionFactory {
 
     private final static Logger LOG = LoggerFactory.getLogger(DefaultUnboundIDConnectionFactory.class);
+    private final static Pattern URL_PATTERN = Pattern.compile("ldap://(.+):(\\d+)");
 
-    private final String _protocol;
-    private final String _host;
-    private final int _port;
-    private final String _bindUser;
-    private final String _bindPassword;
+    private final DCA_KEY _dcaKey;
+    private final DCARepository<DCA_KEY, ?> _affiliationRepository;
+
+    String _bindUser;
+    String _bindPassword;
+
+    String _host;
+    int _port = -1;
 
     @Nullable
-    private final LDAPConnectionOptions _ldapConnectionOptions;
+    private LDAPConnectionOptions _ldapConnectionOptions;
 
-    public DefaultUnboundIDConnectionFactory(String protocol, String host, int port, String bindUser, String bindPassword) {
-        this(protocol, host, port, bindUser, bindPassword, null);
-    }
-
+    /**
+     * Creates a connection factory that uses the URL given in the Domain Controller Affiliation record loaded from the specified
+     * repository using the specified key. The user credentials in the DCA will be ignored in favor of the values given in the
+     * arguments. This constructor is used when saving user credentials into the DCA repository is not desirable.
+     *
+     * @param dcaKey                Identification key of the DCA record containing the server's URL and the user credentials.
+     * @param affiliationRepository The repository that contains the DCA record specified by the other parameter.
+     * @param bindUser              The user name to authenticate with.
+     * @param bindPassword          The password to use on authentication.
+     */
     public DefaultUnboundIDConnectionFactory(
-            String protocol, String host, int port, String bindUser, String bindPassword,
-            LDAPConnectionOptions connectionOptions)
+            DCA_KEY dcaKey, DCARepository<DCA_KEY, ?> affiliationRepository, String bindUser, String bindPassword)
     {
-        _protocol = protocol;
-        _host = host;
-        _port = port;
+        _dcaKey = dcaKey;
+        _affiliationRepository = affiliationRepository;
         _bindUser = bindUser;
         _bindPassword = bindPassword;
-        _ldapConnectionOptions = connectionOptions;
+    }
+
+    /**
+     * Creates a connection factory that entirely relies on details given in the Domain Controller Affiliation record
+     * loaded from the specified repository using the specified key. This constructor is used when saving user credentials into
+     * the DCA repository is not an issue.
+     *
+     * @param dcaKey                Identification key of the DCA record containing the server's URL and the user credentials.
+     * @param affiliationRepository The repository that contains the DCA record specified by the other parameter.
+     */
+    public DefaultUnboundIDConnectionFactory(DCA_KEY dcaKey, DCARepository<DCA_KEY, ?> affiliationRepository) {
+        this(dcaKey, affiliationRepository, null, null);
     }
 
     /**
@@ -65,15 +86,41 @@ public class DefaultUnboundIDConnectionFactory implements PagingUnboundIDConnect
      */
     @Override
     public PagingLdapConnection createConnection() throws LdapClientException {
-        try {
-            checkArgument("ldap".equals(_protocol),
-                    "This connection factory supports only the creation of unsecured ldap:// connections.");
-            LOG.debug("Opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
+        loadDCA();
 
+        try {
+            LOG.debug("Opening LDAP connection to ldap://{}:{}, and binding with user: {}", _host, _port, _bindUser);
             LDAPConnection connection = new LDAPConnection(_ldapConnectionOptions, _host, _port, _bindUser, _bindPassword);
             return new PagingLdapConnectionImpl(connection);
         } catch (LDAPException e) {
             throw new LdapClientException(e);
         }
+    }
+
+    /*package*/ void loadDCA() {
+        DomainControllerAffiliation dca = _affiliationRepository.load(_dcaKey);
+        parseUrl(dca.getUrl());
+        _bindUser = _bindUser == null ? dca.getBindUser() : _bindUser;
+        _bindPassword = _bindPassword == null ? dca.getBindPassword() : _bindPassword;
+    }
+
+    private void parseUrl(String url) throws LdapClientException {
+        Matcher urlPatternMatcher = URL_PATTERN.matcher(url);
+
+        if (urlPatternMatcher.matches() && urlPatternMatcher.groupCount() == 2) {
+            _host = urlPatternMatcher.group(1);
+            try {
+                _port = Integer.parseInt(urlPatternMatcher.group(2));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (_host == null || _port == -1 || _port > 0xffff) {
+            throw new LdapClientException("Could not parse '" + url + "' as an LDAP URL (ldap://<host>:<port>).");
+        }
+    }
+
+    public void setLdapConnectionOptions(@Nullable LDAPConnectionOptions ldapConnectionOptions) {
+        _ldapConnectionOptions = ldapConnectionOptions;
     }
 }
