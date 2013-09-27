@@ -27,6 +27,7 @@ addDependencies(unboundid, [
                 Projects.core,
                 Libs.unboundid,
                 Libs.jsr305Annotations,
+                Libs.guava,
                 Libs.slf4jExt,
         ],
 

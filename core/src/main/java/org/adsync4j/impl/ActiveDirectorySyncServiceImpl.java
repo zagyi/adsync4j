@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.adsync4j.impl;
 
-import com.google.common.collect.Lists;
 import org.adsync4j.api.ActiveDirectorySyncService;
 import org.adsync4j.api.InitialFullSyncRequiredException;
 import org.adsync4j.api.InvocationIdMismatchException;
@@ -23,12 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import java.util.AbstractList;
 import java.util.List;
 import java.util.UUID;
 
-import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.concat;
 import static java.util.Arrays.asList;
 import static org.adsync4j.impl.ActiveDirectorySyncServiceImpl.ActiveDirectoryAttribute.*;
 import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
@@ -227,8 +224,11 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
     void reloadAffiliation() {
         _dcAffiliation = _affiliationRepository.load(_dcaKey);
         LOG.debug("Loaded Domain Controller Affiliation record: {}", _dcAffiliation);
-        checkArgument(_dcAffiliation != null,
-                "No Domain Controller Affiliation record is found in the repository with key: ", _dcaKey);
+        if (_dcAffiliation == null) {
+            throw new IllegalArgumentException(
+                    "The specified Domain Controller Affiliation record is not found in the repository. Requested key was: " +
+                    _dcaKey);
+        }
     }
 
     /**
@@ -251,7 +251,7 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
         }
 
         UUID actualInvocationId = retrieveInvocationId();
-        if (!equal(expectedInvocationId, actualInvocationId)) {
+        if (!actualInvocationId.equals(expectedInvocationId)) {
             throw new InvocationIdMismatchException(expectedInvocationId, actualInvocationId);
         }
     }
@@ -269,13 +269,32 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
      */
     protected void queryChangedAndNewEntries(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor, long upperBoundUSN) {
         String filter = getFilterWithLowerAndUpperBoundUSN(_dcAffiliation.getSearchFilter(), upperBoundUSN);
-        Iterable<String> attributes = concat(asList(USN_CREATED.key()), _dcAffiliation.getAttributesToSync());
 
+        List<String> attributes = new OnePlusListList<>(USN_CREATED.key(), _dcAffiliation.getAttributesToSync());
         Iterable<LDAP_ATTRIBUTE[]> searchResult = _ldapClient.search(_dcAffiliation.getSyncBaseDN(), filter, attributes);
 
         for (LDAP_ATTRIBUTE[] entry : searchResult) {
             feedEntryProcessor(entryProcessor, entry);
         }
+    }
+
+    /**
+     * A list that is composed of one single element followed by a list of other elements.
+     */
+    private static class OnePlusListList<T> extends AbstractList<T> {
+        private final T _one;
+        private final List<T> _list;
+
+        private OnePlusListList(T one, java.util.List<T> list) {
+            _one = one;
+            _list = list;
+        }
+
+        @Override
+        public T get(int index) { return index == 0 ? _one : _list.get(index - 1); }
+
+        @Override
+        public int size() { return _list.size() + 1; }
     }
 
     /**
@@ -409,9 +428,9 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
      *
      * @return A new LDAP filter expression that combines all input filters with the logical AND operator.
      */
-    protected static String and(String firstFilter, String secondFilter, String... otherFilters) {
+    protected static String and(String... filters) {
         StringBuilder result = new StringBuilder("(&");
-        for (String filter : Lists.asList(firstFilter, secondFilter, otherFilters)) {
+        for (String filter : filters) {
             result.append(ensureWrappedInParenthesis(filter));
         }
         return result.append(')').toString();
