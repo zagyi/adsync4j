@@ -28,15 +28,18 @@ systemTesting.tasks.create(
     setupMavenPublishing(mavenPrj, sonatypeUsername, sonatypePassword)
 }
 
+def resolveMavenRepositoryUrl(Project mavenPrj) {
+    System.getProperty('mvnUrl') ?: isSnapshotVersion(mavenPrj) ?
+        ext(mavenPrj.rootProject, 'userLocalMavenRepository') :
+        'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+}
+
 def setupMavenPublishing(Project mavenPrj, String sonatypeUsername, String sonatypePassword) {
     mavenPrj.apply plugin: 'signing'
 
     GroovyMavenDeployer archivesDeployer = getMavenDeployerForConfiguration(mavenPrj, 'archives')
 
-    String repositoryUrl = isSnapshotVersion(mavenPrj) ?
-        ext(mavenPrj.rootProject, 'userLocalMavenRepository') :
-        'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-
+    String repositoryUrl = resolveMavenRepositoryUrl(mavenPrj)
     configureRemoteRepository(archivesDeployer, repositoryUrl, sonatypeUsername, sonatypePassword)
 
     // staticPomContent is declared in gradle/pom.gradle
