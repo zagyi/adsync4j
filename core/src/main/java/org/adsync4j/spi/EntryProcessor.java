@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A call-back interface through which clients of the ADSync4J library obtain new/changed/deleted LDAP entries.
+ * A call-back interface through which clients of ADSync4J can obtain the new/changed/deleted LDAP entries during
+ * synchronization.
  * <p/>
  * In case of a full synchronization, all entries are reported as new.
  *
@@ -30,8 +31,9 @@ public interface EntryProcessor<LDAP_ATTRIBUTE> {
      *
      * @param entry The list of attributes of a new entry. It's guaranteed that this list contains the same number of
      *              attribute values in the same order as it's determined by the {@link
-     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record.
-     *              Note that some of the values might be {@code null} in case the entry doesn't have a corresponding attribute.
+     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record
+     *              which was used for synchronization. Note that some of the values might be {@code null} in case the
+     *              corresponding attribute is not present on the entry.
      */
     void processNew(List<LDAP_ATTRIBUTE> entry);
 
@@ -40,8 +42,9 @@ public interface EntryProcessor<LDAP_ATTRIBUTE> {
      *
      * @param entry The list of attributes of a changed entry. It's guaranteed that this list contains the same number of
      *              attribute values in the same order as it's determined by the {@link
-     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record.
-     *              Note that some of the values might be {@code null} in case the entry doesn't have a corresponding attribute.
+     *              DomainControllerAffiliation#getAttributesToSync() attributesToSync} property of the affiliation record
+     *              which was used for synchronization. Note that some of the values might be {@code null} in case the
+     *              corresponding attribute is not present on the entry.
      */
     void processChanged(List<LDAP_ATTRIBUTE> entry);
 

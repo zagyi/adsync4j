@@ -28,8 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A simple implementation of {@link PagingUnboundIDConnectionFactory} that creates an unsecured connection with the provided
- * parameters.
+ * A simple connection factory that creates an unsecured connection with the parameters stored in a
+ * {@link DomainControllerAffiliation} record.
  */
 @NotThreadSafe
 public class DefaultUnboundIDConnectionFactory<DCA_KEY> implements PagingUnboundIDConnectionFactory {
@@ -50,12 +50,13 @@ public class DefaultUnboundIDConnectionFactory<DCA_KEY> implements PagingUnbound
     private LDAPConnectionOptions _ldapConnectionOptions;
 
     /**
-     * Creates a connection factory that uses the URL given in the Domain Controller Affiliation record loaded from the specified
-     * repository using the specified key. The user credentials in the DCA will be ignored in favor of the values given in the
-     * arguments. This constructor is used when saving user credentials into the DCA repository is not desirable.
+     * Creates a connection factory that uses the URL stored in the {@link DomainControllerAffiliation} record loaded from the
+     * provided repository using the specified key. The user credentials in the DCA will be ignored in favor of the values
+     * given in the arguments. This constructor is recommended when saving user credentials into the DCA repository is not
+     * desirable.
      *
-     * @param dcaKey                Identification key of the DCA record containing the server's URL and the user credentials.
-     * @param affiliationRepository The repository that contains the DCA record specified by the other parameter.
+     * @param dcaKey                Identification key of the DCA record containing the server's URL.
+     * @param affiliationRepository The repository that contains the DCA record specified by the {@code dcaKey}.
      * @param bindUser              The user name to authenticate with.
      * @param bindPassword          The password to use on authentication.
      */
@@ -69,20 +70,20 @@ public class DefaultUnboundIDConnectionFactory<DCA_KEY> implements PagingUnbound
     }
 
     /**
-     * Creates a connection factory that entirely relies on details given in the Domain Controller Affiliation record
-     * loaded from the specified repository using the specified key. This constructor is used when saving user credentials into
-     * the DCA repository is not an issue.
+     * Creates a connection factory that uses the connection parameters stored in the {@link DomainControllerAffiliation}
+     * record loaded from the provided repository using the specified key. This constructor can be used when saving user
+     * credentials into the DCA repository is not an issue.
      *
-     * @param dcaKey                Identification key of the DCA record containing the server's URL and the user credentials.
-     * @param affiliationRepository The repository that contains the DCA record specified by the other parameter.
+     * @param dcaKey                Identification key of the DCA record storing the server's URL and the user credentials.
+     * @param affiliationRepository The repository that contains the DCA record specified by the {@code dcaKey}.
      */
     public DefaultUnboundIDConnectionFactory(DCA_KEY dcaKey, DCARepository<DCA_KEY, ?> affiliationRepository) {
         this(dcaKey, affiliationRepository, null, null);
     }
 
     /**
-     * Creates an {@link LDAPConnection} based on the information passed at creation time, and wraps it in a
-     * {@link PagingLdapConnection} implementation that adds the paging search operation.
+     * Creates an {@link LDAPConnection} and wraps it in a {@link PagingLdapConnection} implementation that adds the paging
+     * search operation.
      */
     @Override
     public PagingLdapConnection createConnection() throws LdapClientException {

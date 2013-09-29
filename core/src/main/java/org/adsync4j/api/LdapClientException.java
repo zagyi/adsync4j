@@ -16,18 +16,19 @@ package org.adsync4j.api;
 import javax.annotation.Nullable;
 
 /**
- * Unchecked exception thrown on error conditions when communicating with an LDAP (Active Directory) server.
+ * Unchecked exception thrown on various error conditions during communication with Active Directory.
  */
 public class LdapClientException extends RuntimeException {
 
     /**
-     * Shortcut/convenience method used to throw an {@link LdapClientException} in case the passed reference is {@code null}.
-     * Clients using this method avoid typing the repetitive, boilerplate code:
-     * {@code if (x==null) {throw new LdapClientException(...)}}.
+     * Shortcut/convenience method throwing an {@link LdapClientException} in case the passed reference is {@code null}.
+     * It can replace the repetitive, boilerplate code:<br/>
+     * {@code if (x==null) {throw new LdapClientException(String.format("some msg with parameter: %s", msgParam))}}.
      *
      * @param referenceToCheck  Reference that must not be null.
-     * @param messageFormat     Defines the exception's message, will be passed to {@link String#format(String, Object...)}.
-     * @param messageParameters Defines the exception's message, will be passed to {@link String#format(String, Object...)}.
+     * @param messageFormat     The exception's message, will be passed to {@link String#format(String, Object...)}.
+     * @param messageParameters Parameters to the exception's message, will be passed to {@link
+     *                          String#format(String, Object...)}.
      * @throws LdapClientException in case the {@code referenceToCheck} parameter is {@code null}.
      */
     public static void throwIfNull(

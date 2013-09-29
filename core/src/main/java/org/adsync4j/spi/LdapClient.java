@@ -16,26 +16,20 @@ package org.adsync4j.spi;
 import org.adsync4j.api.LdapClientException;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Interface that defines all operations an LDAP client implementation needs to provide, so that it can be used by
+ * Interface defining lower level LDAP operations used by
  * {@link org.adsync4j.impl.ActiveDirectorySyncServiceImpl ActiveDirectorySyncServiceImpl}.
  * <p/>
- * Implementations are free to use any LDAP SDK available for Java to implement this interface. Each of these SDKs define a
- * specific type to represent an LDAP attribute (e.g. it's {@code javax.naming.directory.Attribute} in case of JNDI,
- * or {@code com.unboundid.ldap.sdk.Attribute} in case of the UnboundID LDAP SDK, etc). However,
- * callers of this interface can not possibly be prepared to deal with all the different attribute types. In order to be
- * able to leave the decision to the implementations which LDAP SDK to use, some indirection had to be introduced here.
- * Therefore a type parameter is defined for the SDK specific attribute type, and implementations will have to provide an
- * accompanying class that can resolve the SDK specific attribute to well known types like String, Long,
- * etc. (see {@link LdapClient#getAttributeResolver()}).
+ * Implementations are free to use any LDAP SDK available for Java to implement this interface. Clients will use the
+ * {@link LdapAttributeResolver} returned by {@link LdapClient#getAttributeResolver()} to convert values of the LDAP SDK specific
+ * attribute type to values of well known types like String, Long, etc.
  * <p/>
- * Once the synchronization operation is finished, the service will call {@link LdapClient#closeConnection closeConnection()}
- * to release any resources associated with the connection. Implementations must make sure that the connection is automatically
- * re-opened if any of the interface's methods is invoked after a call to {@link LdapClient#closeConnection closeConnection()}.
+ * Implementations have to make sure that the connection is automatically re-opened if necessary.
  *
- * @param <LDAP_ATTRIBUTE> The LDAP attribute type defined in the SDK with the help of which this interface was implemented.
+ * @param <LDAP_ATTRIBUTE> The LDAP attribute type defined in the SDK used to implement this interface.
  */
 public interface LdapClient<LDAP_ATTRIBUTE> {
 
@@ -53,9 +47,9 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
     public static final String OBJECT_GUID = "objectGUID";
 
     /**
-     * Retrieves some metadata from the Active Directory server by reading an attribute of its root entry (root DSE).
+     * Retrieves an attribute of the directory's root DSE.
      *
-     * @param attributeName Name of the attribute contained in the root DSE.
+     * @param attributeName Name of one of the attributes of the directory's root DSE.
      * @return Value of the root DSE attribute.
      * @throws org.adsync4j.api.LdapClientException
      *          if the root DSE cannot be retrieved or the specified attribute does not exist.
@@ -66,8 +60,8 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
     /**
      * Retrieves an attribute of a specific entry.
      *
-     * @param entryDN   Distinguished Name of the entry to read.
-     * @param attribute Name of the attribute contained in the specified entry.
+     * @param entryDN   Distinguished name of the entry to read.
+     * @param attribute Name of an attribute of the specified entry.
      * @return Value of the attribute.
      * @throws LdapClientException if either the specified entry or its attribute is not found.
      */
@@ -77,36 +71,43 @@ public interface LdapClient<LDAP_ATTRIBUTE> {
     /**
      * Performs a search operation with the given arguments.
      * <p/>
-     * <b>Important!</b> Implementations must make sure that the attribute values in the returned attribute arrays have the same
-     * number of attributes <i>and</i> in the same order as the input attribute name list (insert {@code null} value in case
-     * an attribute is not present in an entry).
+     * <b>Important! Implementers must make sure that:</b>
+     * <ul>
+     * <li>the returned attribute arrays contain <i>the same number of attributes in the same order</i> as specified by the
+     * {@code attributes} input argument (insert {@code null} values if an attribute is not present on an entry)</li>
+     * <li><i>every</i> directory entry that satisfies the search criteria is returned (use paging to avoid hitting the result
+     * size limit of the server!)</li>
+     * </ul>
      *
      * @param searchBaseDN The scope of the search operation will be the sub-tree starting from the node designated by the
      *                     Distinguished Name given here.
      * @param filter       LDAP filter expression to use when performing the search.
      * @param attributes   List of attribute names to retrieve in the result set.
-     * @return A number of attribute arrays that the caller can iterate trough. Each array represents one entry in the directory.
-     *         The length of returned arrays and the order of the attribute values in it is the same as that of the input
-     *         list of attribute names.
-     * @throws LdapClientException in case the search operation failed for any reason.
+     * @return A number of attribute arrays each of which represents one directory entry satisfying the search criteria. Each
+     *         individual value in the returned arrays corresponds to the attribute in the same position in the {@code
+     *         attributes} input argument.
+     * @throws LdapClientException in case the LDAP communication failed for some reason.
      */
     @Nonnull
-    Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, Iterable<String> attributes) throws LdapClientException;
+    Iterable<LDAP_ATTRIBUTE[]> search(String searchBaseDN, String filter, List<String> attributes) throws LdapClientException;
 
     /**
      * Performs a search operation that retrieves the {@code objectGUID} attribute of deleted entries (tombstones) which satisfy
-     * the given filter expression.
+     * the given search criteria.
      * <p/>
-     * <b>Important!</b> Implementations must make sure that  the search request contains the request control with the OID
-     * defined in {@link LdapClient#SHOW_DELETED_CONTROL_OID}.
-     * <p/>
-     * Implementations can use the helper method {@link org.adsync4j.impl.UUIDUtils#bytesToUUID(byte[]) UUIDUtils.bytesToUUID()}
-     * to correctly decode the {@code objectGUID} value (a 16-byte long byte array) as a {@link UUID} object.
+     * <b>Important! Implementers must make sure that:</b>
+     * <ul>
+     * <li>the search request contains the "show deleted" request control (see {@link LdapClient#SHOW_DELETED_CONTROL_OID})</li>
+     * <li>the {@code objectGUID} attribute is correctly resolved to a {@link UUID} object (see {@link
+     * org.adsync4j.impl.UUIDUtils#bytesToUUID(byte[]) UUIDUtils.bytesToUUID()})</li>
+     * <li><i>every</i> directory entry that satisfies the search criteria is returned (use paging to avoid hitting the result
+     * size limit of the server!)</li>
+     * </ul>
      *
      * @param rootDN Root DN of the directory's domain (e.g. {@code DC=example,DC=com})
      * @param filter LDAP filter expression to use when searching for deleted objects.
      * @return The deleted objects' unique identifiers as {@link UUID} objects which the caller can iterate through.
-     * @throws LdapClientException in case the search operation failed for any reason.
+     * @throws LdapClientException in case the LDAP communication failed for some reason.
      */
     @Nonnull
     Iterable<UUID> searchDeleted(String rootDN, String filter) throws LdapClientException;

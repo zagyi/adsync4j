@@ -17,11 +17,11 @@ package org.adsync4j.spi;
  * Interface of a repository that is able to load and save {@link DomainControllerAffiliation} instances.
  * <p/>
  * <b>Important!</b>
- * Implementations must persist DCAs in the same physical database that stores the entries synchronized based on the DCA. This
- * is necessary to ensure that the DCA stays consistent with the synchronized entries in case the database is restored from a
- * backup. This consistency ensures that an incremental synchronization will be enough after a local database restore operation.
+ * Implementations must persist DCAs in the same physical database that stores the synchronized entries. This is necessary in
+ * order to ensure the consistency between the DCA and the synchronized data even if the database fails and has to be restored
+ * from a backup. Failing to do so will result in the need for a full re-synchronization after the database is restored.
  *
- * @param <KEY> The type of the key used to identify the stored DCAs.
+ * @param <KEY>      The type of the key used to identify the stored DCAs.
  * @param <DCA_IMPL> The implementation class of the {@link DomainControllerAffiliation} interface.
  */
 public interface DCARepository<KEY, DCA_IMPL extends DomainControllerAffiliation> {

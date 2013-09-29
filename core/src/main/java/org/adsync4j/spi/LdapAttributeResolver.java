@@ -18,15 +18,14 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Interface for classes that interpret an LDAP attribute type (specific to a certain LDAP SDK) to well known types like
- * String, Long, etc.
+ * Interface for classes that can translate from an LDAP SDK specific attribute type to well known types like String, Long, etc.
  * <p/>
  * {@link LdapClient} implementations are free to use any LDAP SDK available for Java to implement the {@link LdapClient}
  * interface. Each of these SDKs define a specific type to represent an LDAP attribute E.g. it's
  * {@code javax.naming.directory.Attribute} in case of JNDI, or {@code com.unboundid.ldap.sdk.Attribute} in case of the
  * UnboundID LDAP SDK, etc. Since callers of the {@link LdapClient} interface can not possibly be prepared to deal with all the
- * different attribute types, an auxiliary class is needed that helps to interpret the SDK specific attribute type. This is
- * exactly what this type is defined for.
+ * different attribute types, a helper class is needed that can interpret the SDK specific attribute type. This interface is
+ * defined for such helper classes.
  *
  * @param <LDAP_ATTRIBUTE> The SDK specific LDAP attribute type that this class is able to interpret.
  */

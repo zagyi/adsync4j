@@ -17,21 +17,21 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Interface for objects that store all information required to maintain a relationship to a Domain Controller (a server
- * running Active Directory). It's basically a recipe by which synchronization operations do their job.
+ * Interface for objects that store all the information required to maintain a synchronization relationship with a domain
+ * controller. It's basically a recipe by which synchronization operations work.
  * <p/>
  * It defines properties:
  * <ul>
+ * <li>on how to access and identify the domain controller,</li>
  * <li>on what the scope of synchronization is,</li>
- * <li>on how to identify the Domain Controller,</li>
  * <li>and a {@link DomainControllerAffiliation#getHighestCommittedUSN marker} designating the point of time until which all
- * entries and changes has already been retrieved from Active Directory.</li>
+ * entries and changes has already been retrieved from the domain controller.</li>
  * </ul>
  */
 public interface DomainControllerAffiliation {
 
     /**
-     * @return The URL of the Domain Controller.
+     * @return The URL of the domain controller.
      */
     String getUrl();
 
@@ -51,7 +51,7 @@ public interface DomainControllerAffiliation {
     String getRootDN();
 
     /**
-     * @return DN of the node designating the sub-tree of the directory which is the scope of synchronization (e.g.
+     * @return Distinguished name of the directory node designating the sub-tree which will be the scope of synchronization (e.g.
      *         {@code CN=Users,DC=example,DC=com}).
      */
     String getSyncBaseDN();
@@ -67,16 +67,16 @@ public interface DomainControllerAffiliation {
     String getSearchDeletedObjectsFilter();
 
     /**
-     * @return List of attributes to retrieve from Active Directory.
+     * @return List of attributes to fetch when retrieving objects from Active Directory.
      */
     List<String> getAttributesToSync();
 
     /**
      * Invocation ID is a GUID that identifies the database on the server side. Technically, it's an attribute of a directory
      * entry pointed to by the 'dsServiceName' attribute of the root DSE. The affiliation record needs to store this ID,
-     * because we must recognize if it changes on the server side (as a result of restoring the server-side database).
+     * in order to be able to recognize if it changes on the server side (as a result of restoring the server-side database).
      *
-     * @return The invocation ID of the Domain Controller.
+     * @return The invocation ID of the domain controller.
      * @see org.adsync4j.api.InvocationIdMismatchException InvocationIdMismatchException
      */
     UUID getInvocationId();

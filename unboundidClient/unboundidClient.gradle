@@ -25,10 +25,10 @@ archivesBaseName = 'adsync4j-unboundid'
 addDependencies(unboundid, [
         compile: [
                 Projects.core,
-                Libs.unboundid,
                 Libs.jsr305Annotations,
                 Libs.guava,
                 Libs.slf4jExt,
+                Libs.unboundid,
         ],
 
         runtime: [
@@ -50,12 +50,12 @@ addDependencies(unboundid, [
                 Libs.hamcrest,
                 Libs.junit,
                 Libs.springBeans,
-                Libs.springTest,
                 Libs.springContext,
+                Libs.springTest,
         ],
 
         integrationTestRuntime: [
-                Libs.spockSpring,
                 Libs.slf4jBridgeJCL,
+                Libs.spockSpring,
         ],
 ])

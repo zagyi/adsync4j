@@ -32,10 +32,10 @@ import static com.unboundid.ldap.sdk.controls.SimplePagedResultsControl.PAGED_RE
  * Iterator returning a single page of {@link com.unboundid.ldap.sdk.SearchResultEntry} elements on each iteration.
  * Clients are expected to build a search request that includes a {@link SimplePagedResultsControl}, and to make an initial
  * call to {@link LDAPInterface#search(com.unboundid.ldap.sdk.SearchRequest)} with it. The iterator can then be constructed
- * with the {@link SearchResult} returned to this the initial search invocation.
+ * with the {@link SearchResult} returned to this initial search invocation.
  * <p/>
- * Subsequent searches are executed by the iterator when {@link PagingSearchIterator#next next()} is called (specifying
- * the same page size as that of the initial search request).
+ * Subsequent searches are executed by the iterator when {@link PagingSearchIterator#next next()} is called (using the same page
+ * size as that of the initial search request).
  */
 public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
 
@@ -52,7 +52,7 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
     /**
      * @param connection    The connection on which the search request is to be executed.
      * @param searchRequest The search request containing a {@link SimplePagedResultsControl}.
-     * @param firstResult   The result of the initial search.
+     * @param firstResult   The result of the initial search request.
      */
     public PagingSearchIterator(LDAPInterface connection, SearchRequest searchRequest, SearchResult firstResult) {
         _connection = connection;
@@ -128,7 +128,7 @@ public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
             SearchResult searchResult = _connection.search(_searchRequest);
             _pagingCookie = getPagingCookieForNextIteration(searchResult);
             LOG.debug("Search result page received, response indicates it's {} page.",
-                    _pagingCookie == null ? "the FINAL" : "an intermediate");
+                    _pagingCookie == null ? "the final" : "an intermediate");
             return searchResult.getSearchEntries();
         } catch (LDAPSearchException e) {
             throw new LdapClientException(e);

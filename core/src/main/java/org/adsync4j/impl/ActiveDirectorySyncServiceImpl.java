@@ -33,32 +33,34 @@ import static org.adsync4j.impl.UUIDUtils.bytesToUUID;
 /**
  * Implementation of the main service interface of ADSync4J.
  * <p/>
- * As the construction of instances of this class is cheap, each {@link org.adsync4j.spi.DomainControllerAffiliation} (DCA) you
- * want to use requires a dedicated {@link ActiveDirectorySyncServiceImpl} instance. However,
- * instead of directly setting the DCA, clients need to provide a repository of DCAs and the key identifying the specific DCA
- * based on which synchronization is to be carried out. (See the {@link
- * ActiveDirectorySyncServiceImpl#ActiveDirectorySyncServiceImpl constructor}). This indirection makes it possible to relieve
- * clients of the responsibility to update the highest committed Update Sequence  Number in the DCA and to persist the updated
- * record, which is essential for the correct functioning of synchronization operations.
+ * In order to start synchronizing content, clients need to create a {@link org.adsync4j.spi.DomainControllerAffiliation} (DCA)
+ * for every domain controller they want to synchronize with, and each DCA requires a dedicated {@link
+ * ActiveDirectorySyncServiceImpl} instance. When creating a service instance, the DCA is not passed directly,
+ * but specified indirectly through a key and a repository of DCAs. This indirection relieves clients of the
+ * responsibility to update the highest committed Update Sequence Number in the DCA and to persist the updated record,
+ * which is crucial for the correct functioning of synchronization operations.
  * <p/>
  * This class defines a number of type parameters which are required, so that clients can:
  * <ul>
  * <li>provide their own implementation of the {@link org.adsync4j.spi.DomainControllerAffiliation} interface (e.g. a JPA
  * entity),</li>
- * <li>freely choose an arbitrary key type for the repository storing DCAs,</li>
+ * <li>provide their own implementation of the {@link org.adsync4j.spi.DCARepository} interface (e.g. a JPA repository),</li>
+ * <li>freely choose an arbitrary key type for the repository,</li>
  * <li>pick an LDAP SDK to use for implementing the {@link org.adsync4j.spi.LdapClient} interface.</li>
  * </ul>
  * <p/>
  * <b>Important!</b>
- * The provided DCA repository must persist DCAs in the same physical database that also stores the synchronized entries. This is
- * necessary to ensure that the DCA stays consistent with the synchronized data in case the database is restored from a backup.
+ * The provided {@link DCARepository} implementation must persist DCAs in the same physical database that stores the
+ * synchronized entries. This is necessary in order to ensure the consistency between the DCA and the synchronized data even if
+ * the database fails and has to be restored from a backup. Failing to do so will result in the need for a full
+ * re-synchronization after the database is restored.
  * <p/>
  * This class is NOT thread-safe.
  *
  * @param <DCA_KEY>        Type of the key used in the provided DCA repository.
- * @param <DCA_IMPL>       The implementation class of the {@link org.adsync4j.spi.DomainControllerAffiliation} used the
- *                         provided DCA repository.
- * @param <LDAP_ATTRIBUTE> The LDAP attribute type determined by the {@link org.adsync4j.spi.LdapClient} implementation in use.
+ * @param <DCA_IMPL>       The implementation class of {@link org.adsync4j.spi.DomainControllerAffiliation}, the instances
+ *                         of which are stored in the provided DCA repository.
+ * @param <LDAP_ATTRIBUTE> The LDAP attribute type (determined by the {@link org.adsync4j.spi.LdapClient} implementation in use).
  */
 @NotThreadSafe
 public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainControllerAffiliation, LDAP_ATTRIBUTE>
@@ -73,12 +75,18 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
 
     protected DCA_IMPL _dcAffiliation;
 
+    /**
+     * Internal interface with two implementations encapsulating the logic of the full and incremental synchronization
+     * operations. Not to be directly used by clients.
+     *
+     * @param <LDAP_ATTRIBUTE>
+     */
     protected interface SyncOperation<LDAP_ATTRIBUTE> {
         void execute(long remoteHighestCommittedUSN, EntryProcessor<LDAP_ATTRIBUTE> entryProcessor);
     }
 
     /**
-     * Enum defining a few attribute names in Active Directory that the synchronization service uses.
+     * Internal enum listing a number of attribute names defined in Active Directory that the synchronization service uses.
      */
     protected enum ActiveDirectoryAttribute {
         /**
@@ -98,13 +106,13 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
         DS_SERVICE_NAME("dsServiceName"),
 
         /**
-         * Attribute of the root DSE storing the highest Update Sequence Number committed in Active Directory.
+         * Attribute of the root DSE storing the highest Update Sequence Number committed locally by the domain controller.
          */
         HIGHEST_COMMITTED_USN("highestCommittedUSN"),
 
         /**
-         * Attribute maintained in every entry in Active Directory recording the Sequence Number of the transaction that last
-         * changed the entry.
+         * Attribute maintained in every entry in Active Directory recording the Sequence Number of the transaction that most
+         * recently changed the entry.
          */
         USN_CHANGED("uSNChanged"),
 
@@ -133,21 +141,23 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
     }
 
     /**
-     * Constructs a synchronization service instance that is dedicated to work with one specific {@link
-     * DomainControllerAffiliation} record. This one specific DCA must be provided through a repository,
-     * in order to allow the service to persist the updated DCA after a successful synchronization.
+     * Constructs a synchronization service instance that is dedicated to work with the specific
+     * {@link DomainControllerAffiliation} record loaded from the provided {@link DCARepository} using the given {@code dcaKey}.
+     * This indirection makes it possible to relieve clients of the responsibility to update the highest committed Update
+     * Sequence Number in the DCA and to persist the updated record, which is crucial for the correct functioning of
+     * synchronization operations.
      * <p/>
      * <b>Important!</b>
-     * The provided repository {@link DCARepository} must persist DCAs in the same
-     * physical database that
-     * stores the synchronized entries. This is necessary to ensure that the {@link DomainControllerAffiliation} stays
-     * consistent with the synchronized entries in case the database is restored from a backup.
+     * The provided {@link DCARepository} implementation must persist DCAs in the same physical database that stores the
+     * synchronized entries. This is necessary in order to ensure the consistency between the DCA and the synchronized data
+     * even if the database fails and has to be restored from a backup. Failing to do so will result in the need for a full
+     * re-synchronization after the database is restored.
      *
      * @param dcaKey                Key of the {@link DomainControllerAffiliation} based on which this service instance
-     *                              has to perform synchronization. The passed {@code affiliationRepository} must contain a
-     *                              {@link DomainControllerAffiliation DCA} assigned to this key.
+     *                              has to perform the synchronization operations. The passed {@code affiliationRepository} must
+     *                              contain a DCA assigned to this key.
      * @param affiliationRepository Repository managing {@link DomainControllerAffiliation} entities.
-     * @param ldapClient            {@link LdapClient} that the service uses to communicate with Active Directory.
+     * @param ldapClient            {@link LdapClient} used by the service to communicate with Active Directory.
      */
     public ActiveDirectorySyncServiceImpl(
             DCA_KEY dcaKey,
@@ -160,6 +170,20 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
         _attributeResolver = _ldapClient.getAttributeResolver();
     }
 
+    /**
+     * Performs a full synchronization that retrieves all entries currently found in the synchronization scope in Active
+     * Directory. Entries are delivered one-by-one to the caller by iteratively invoking {@link EntryProcessor#processNew
+     * processNew()} on the provided {@link EntryProcessor}.
+     * <p/>
+     * It ensures that the {@link DomainControllerAffiliation} this service instance uses is {@link DCARepository#save saved}
+     * after updating the current highest committed Update Sequence Number and the Invocation ID it contains.
+     *
+     * @param entryProcessor {@link EntryProcessor} implementation provided by the caller in order to receive
+     *                       the synchronized entries.
+     * @return The current highest committed Update Sequence Number on the server side that represents the point of time from
+     *         which the next incremental synchronization will have to retrieve changes from Active Directory.
+     * @throws LdapClientException in case a problem is encountered during communication with Active Directory.
+     */
     @Override
     public long fullSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
         return doSync(entryProcessor, new SyncOperation<LDAP_ATTRIBUTE>() {
@@ -179,6 +203,21 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
         });
     }
 
+    /**
+     * Performs an incremental synchronization that only retrieves the entries created/changed/deleted after the point of time
+     * represented by the highest committed Update Sequence Number that has been recorded by the last synchronization. Entries
+     * are delivered one-by-one to the caller by iteratively invoking the corresponding methods of the provided
+     * {@link EntryProcessor}.
+     * <p/>
+     * It ensures that the {@link DomainControllerAffiliation} this service instance uses is {@link DCARepository#save saved}
+     * after updating the current highest committed Update Sequence Number and the Invocation ID it contains.
+     *
+     * @param entryProcessor {@link EntryProcessor} implementation provided by the caller in order to receive the synchronized
+     *                       entries.
+     * @return The current highest committed Update Sequence Number on the server side that represents the point of time from
+     *         which the next incremental synchronization will have to retrieve changes from Active Directory.
+     * @throws LdapClientException in case a problem is encountered during communication with Active Directory.
+     */
     @Override
     public long incrementalSync(EntryProcessor<LDAP_ATTRIBUTE> entryProcessor) {
         return doSync(entryProcessor, new SyncOperation<LDAP_ATTRIBUTE>() {
@@ -353,9 +392,9 @@ public class ActiveDirectorySyncServiceImpl<DCA_KEY, DCA_IMPL extends DomainCont
     }
 
     /**
-     * Retrieves the Invocation ID from Active Directory by examining the appropriate directory entries.
+     * Retrieves the Invocation ID from Active Directory.
      *
-     * @return The current Invocation ID identifying the affiliated Domain Controller.
+     * @return The current Invocation ID identifying the affiliated domain controller.
      */
     protected UUID retrieveInvocationId() {
         LDAP_ATTRIBUTE dsServiceDNAttribute = _ldapClient.getRootDSEAttribute(DS_SERVICE_NAME.key());
