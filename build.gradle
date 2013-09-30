@@ -38,7 +38,7 @@ rootPrj.with {
             apply from: "$rootPrj.rootDir/gradle/providedConfiguration.gradle"
 
             group = 'org.adsync4j'
-            version = "0.1.1-SNAPSHOT"
+            version = "0.2"
 
             javaPlugin(prj).sourceCompatibility = 1.7
             javaPlugin(prj).targetCompatibility = 1.7
