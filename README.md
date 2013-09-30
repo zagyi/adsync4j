@@ -1,5 +1,7 @@
 ## ADSync4J - Active Directory Synchronization for Java
 
+[![Build Status](https://travis-ci.org/zagyi/adsync4j.png?branch=develop)](https://travis-ci.org/zagyi/adsync4j)
+
 #### What is ADSync4J?
 ADSync4J is a lightweight Java library that greatly simplifies the task of creating and maintaining a replica of objects living in Active Directory.
 
