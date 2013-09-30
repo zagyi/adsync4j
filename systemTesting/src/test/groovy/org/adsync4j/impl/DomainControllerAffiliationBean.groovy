@@ -13,21 +13,33 @@
  ***************************************************************************** */
 package org.adsync4j.impl
 
-import org.adsync4j.DomainControllerAffiliation
+import org.adsync4j.spi.DomainControllerAffiliation
 
 class DomainControllerAffiliationBean implements DomainControllerAffiliation {
-    UUID invocationId
-    Long highestCommittedUSN
-
-    String protocol
-    String host
-    int port
+    String url
     String bindUser
     String bindPassword
+
+    UUID invocationId
+    Long highestCommittedUSN
 
     String rootDN
     String syncBaseDN
     List<String> attributesToSync
     String searchFilter
     String searchDeletedObjectsFilter
+
+    @Override
+    DomainControllerAffiliation setInvocationId(UUID id) {
+        assert id
+        invocationId = id
+        this
+    }
+
+    @Override
+    DomainControllerAffiliation setHighestCommittedUSN(Long hcusn) {
+        assert hcusn
+        highestCommittedUSN = hcusn
+        this
+    }
 }

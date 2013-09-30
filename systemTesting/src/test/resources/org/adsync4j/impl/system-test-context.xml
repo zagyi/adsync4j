@@ -4,18 +4,24 @@
        xmlns:c="http://www.springframework.org/schema/c"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+       xsi:schemaLocation="
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       ">
 
-    <bean class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl"
-          c:ldapClient-ref="ldapClient"
-          c:affiliation-ref="dcAffiliation">
+    <bean id="dcaHolder" class="org.adsync4j.impl.DCAHolder"
+          c:dca-ref="domainControllerAffiliation"/>
+
+    <bean id="adSyncService" class="org.adsync4j.impl.ActiveDirectorySyncServiceImpl">
+        <constructor-arg name="dcaKey" value="foo"/>
+        <constructor-arg name="affiliationRepository" ref="dcaHolder"/>
+        <constructor-arg name="ldapClient" ref="ldapClient"/>
     </bean>
 
-    <bean id="abstractDCAffiliation" class="org.adsync4j.impl.DomainControllerAffiliationBean" abstract="true"
-          p:protocol="${protocol}"
+    <!-- url defaults to empty string (not needed for the embedded server) -->
+    <bean id="domainControllerAffiliation" class="org.adsync4j.impl.DomainControllerAffiliationBean"
+          p:url="${url:}"
           p:rootDN="${rootDN}"
-          p:bindUser="${bindUser}"
-          p:bindPassword="${bindPassword}"
           p:invocationId="${invocationId}"
           p:highestCommittedUSN="${highestCommittedUSN}"
           p:attributesToSync="#{'${attributesToSync}'.split(',')}"
@@ -23,12 +29,6 @@
           p:searchFilter="${searchFilter}"
           p:searchDeletedObjectsFilter="${searchDeletedObjectsFilter}"/>
 
-    <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
-          c:connectionFactory-ref="connectionFactory"/>
-
-    <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
-          c:ldapConnectionDetails-ref="dcAffiliation"
-          c:ldapConnectionOptions-ref="connectionOptions"/>
 
     <bean id="connectionOptions" class="com.unboundid.ldap.sdk.LDAPConnectionOptions"
           p:connectTimeoutMillis="${connectTimeoutMillis}"/>
@@ -36,17 +36,20 @@
     <beans profile="realActiveDirectory">
         <context:property-placeholder location="${adPropertiesLocation}"/>
 
-        <bean id="dcAffiliation" parent="abstractDCAffiliation"
-              p:host="${host}"
-              p:port="${port}"/>
+        <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClient"
+              c:connectionFactory-ref="connectionFactory"/>
+
+        <bean id="connectionFactory" class="org.adsync4j.unboundid.DefaultUnboundIDConnectionFactory"
+              c:affiliationRepository-ref="dcaHolder"
+              c:dcaKey="bar"
+              c:bindUser="${bindUser}"
+              c:bindPassword="${bindPassword}"
+              p:ldapConnectionOptions-ref="connectionOptions">
+        </bean>
     </beans>
 
     <beans profile="inMemoryLdapServer">
-        <context:property-placeholder location="${inMemoPropertiesLocation}"/>
-
-        <bean id="dcAffiliation" parent="abstractDCAffiliation"
-              p:host="localhost"
-              p:port="#{embeddedServer.port}"/>
+        <context:property-placeholder location="classpath:/org/adsync4j/impl/in-memory-ldap.properties"/>
 
         <bean id="embeddedServer" class="org.adsync4j.testutils.ldap.InMemoryActiveDirectoryMockFactoryBean">
             <property name="rootDN" value="${rootDN}"/>
@@ -54,18 +57,25 @@
             <property name="ldifs">
                 <list>
                     <value>classpath:/org/adsync4j/impl/data/rootDN.ldif</value>
-                    <value>/org/adsync4j/impl/data/deleted-objects-container.ldif</value>
-                    <value>/org/adsync4j/impl/data/deleted-users.ldif</value>
+                    <value>classpath:/org/adsync4j/impl/data/deleted-objects-container.ldif</value>
+                    <value>classpath:/org/adsync4j/impl/data/deleted-users.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/ds-service-dn.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/users-container.ldif</value>
                     <value>classpath:/org/adsync4j/impl/data/users.ldif</value>
                 </list>
             </property>
-            <property name="bindCredentials">
+            <property name="rootDSEAttributes">
                 <map>
-                    <entry key="${bindUser}" value="${bindPassword}"/>
+                    <entry key="highestCommittedUSN" value="${adRootDse.highestCommittedUSN}"/>
+                    <entry key="dsServiceName" value="${adRootDse.dsServiceName}"/>
                 </map>
             </property>
         </bean>
+
+        <bean id="ldapClient" class="org.adsync4j.unboundid.UnboundIDLdapClientForTesting"
+              c:connectionFactory-ref="connectionFactory"/>
+
+        <bean id="connectionFactory" class="org.adsync4j.unboundid.EmbeddedUnboundIDServerConnectionFactory"
+              c:embeddedLdapServer-ref="embeddedServer"/>
     </beans>
 </beans>

@@ -14,11 +14,11 @@
 package org.adsync4j.unboundid
 
 import com.unboundid.ldap.sdk.*
-import org.adsync4j.LdapClientException
+import org.adsync4j.api.LdapClientException
 import spock.lang.Specification
 
-import static org.adsync4j.LdapClient.OBJECT_GUID
-import static org.adsync4j.LdapClient.SHOW_DELETED_CONTROL_OID
+import static org.adsync4j.spi.LdapClient.OBJECT_GUID
+import static org.adsync4j.spi.LdapClient.SHOW_DELETED_CONTROL_OID
 import static org.adsync4j.testutils.TestUtils.uuidToBytArray
 
 class UnboundIDLdapClientSpec extends Specification {
@@ -148,11 +148,11 @@ class UnboundIDLdapClientSpec extends Specification {
         SearchRequest capturedRequest
 
         when:
-        client.searchDeleted('DOC_ID', FILTER).collect()
+        client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         1 * connection.search({ capturedRequest = it }, PAGE_SIZE) >> []
-        capturedRequest.baseDN == 'DOC_ID'
+        capturedRequest.baseDN == BASE_DN
         capturedRequest.scope == SearchScope.SUB
         capturedRequest.filter.toString() == FILTER
         capturedRequest.attributes == [OBJECT_GUID]
@@ -169,7 +169,7 @@ class UnboundIDLdapClientSpec extends Specification {
         def entry = new SearchResultEntry('', [attribute])
 
         when:
-        def ids = client.searchDeleted('DOC_ID', FILTER).collect()
+        def ids = client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         1 * connection.search(* _) >> [entry]
@@ -183,7 +183,7 @@ class UnboundIDLdapClientSpec extends Specification {
         allowNoFurtherInteractions()
 
         when:
-        def ids = client.searchDeleted('DOC_ID', FILTER).collect()
+        def ids = client.searchDeleted(BASE_DN, FILTER).collect()
 
         then:
         ids == [null]
@@ -192,6 +192,7 @@ class UnboundIDLdapClientSpec extends Specification {
     def 'all methods propagate ldap exception'() {
         given:
         def client = new UnboundIDLdapClient({ connection } as PagingUnboundIDConnectionFactory)
+        connection.isConnected() >> true
         connection._ >> { throw new LDAPException(ResultCode.TIMEOUT) }
 
         when:

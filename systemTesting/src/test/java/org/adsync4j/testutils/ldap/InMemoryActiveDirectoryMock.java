@@ -17,11 +17,25 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.sdk.LDAPException;
 
+import java.util.Map;
+
 public class InMemoryActiveDirectoryMock extends EmbeddedUnboundIDLdapServer {
+
+    private Map<String, String> _rootDSEAttributes;
+
     @Override
     protected InMemoryDirectoryServer createInMemoryDirectoryServer(
             InMemoryDirectoryServerConfig config) throws LDAPException
     {
-        return new CustomInMemoryDirectoryServer(config);
+        InMemoryDirectoryServerConfigWithRootDSEAttributes  configWithRootDSEAttributes = new
+                InMemoryDirectoryServerConfigWithRootDSEAttributes(config);
+
+        configWithRootDSEAttributes.setRootDSEAttributes(_rootDSEAttributes);
+
+        return new CustomInMemoryDirectoryServer(configWithRootDSEAttributes);
+    }
+
+    public void setRootDSEAttributes(Map<String, String> rootDSEAttributes) {
+        _rootDSEAttributes = rootDSEAttributes;
     }
 }

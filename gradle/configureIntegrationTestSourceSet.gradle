@@ -51,7 +51,7 @@ dependencies {
 task integrationTest(type: Test, dependsOn: jar) {
     classpath = sourceSets.integrationTest.runtimeClasspath
     testClassesDir = sourceSets.integrationTest.output.classesDir
-    testReportDir = file("${reporting.baseDir}/integration-tests")
+    reports.html.destination = file("${reporting.baseDir}/integration-tests")
 }
 
 check.dependsOn integrationTest

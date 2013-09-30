@@ -1,9 +1,13 @@
+_*
 /unversioned/
 /.gradle/
 /*/.gradle/
 /build/
 /*/build/
 /out/
+*.iml
+*.ipr
+*.iws
 **/*.iml
 **/*.ipr
 **/*.iws

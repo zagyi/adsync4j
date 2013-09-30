@@ -19,6 +19,7 @@ import com.google.common.io.Files;
 import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.schema.Schema;
 import com.unboundid.ldif.LDIFException;
@@ -53,7 +54,6 @@ public class EmbeddedUnboundIDLdapServer {
     private final static Logger LOG = LoggerFactory.getLogger(EmbeddedUnboundIDLdapServer.class);
     private final static boolean CLOSE_EXISTING_CONNECTIONS_ON_SHUTDOWN = true;
     private final static boolean CLEAR_BEFORE_LDIF_IMPORT = false;
-    public static final String INSTANCE_ALREADY_INITIALIZED = "Instance already initialized.";
 
     @Nullable
     private Integer _port;
@@ -69,7 +69,7 @@ public class EmbeddedUnboundIDLdapServer {
 
     @PostConstruct
     public EmbeddedUnboundIDLdapServer init() {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
 
         try {
             InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig(
@@ -105,6 +105,10 @@ public class EmbeddedUnboundIDLdapServer {
         } else {
             LOG.warn("shutDown() called on an uninitialized instance.");
         }
+    }
+
+    public LDAPConnection getConnection() throws LDAPException {
+        return _server.getConnection();
     }
 
     private void initSchema(InMemoryDirectoryServerConfig config) throws LDAPSDKException, IOException {
@@ -224,6 +228,10 @@ public class EmbeddedUnboundIDLdapServer {
 
     }
 
+    private void assertUninitialized() {
+        checkState(!_initialized, "Instance already initialized.");
+    }
+
     //region ############## getters ##############
     public int getPort() {
         return _port == null ? obtainPort() : _port;
@@ -244,27 +252,27 @@ public class EmbeddedUnboundIDLdapServer {
 
     //region ############## setters/adders ##############
     public EmbeddedUnboundIDLdapServer setPort(int port) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         _port = port;
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer setLdifs(Iterable<InputStream> ldifs) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(ldifs);
         _ldifs = Lists.newArrayList(ldifs);
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer addLdif(InputStream ldif) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(ldif);
         _ldifs.add(ldif);
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer setSchemaFiles(Iterable<File> schemaFiles) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(schemaFiles);
         _schemas = new ArrayList<>();
         for (File schemaFile : schemaFiles) {
@@ -274,7 +282,7 @@ public class EmbeddedUnboundIDLdapServer {
     }
 
     public EmbeddedUnboundIDLdapServer setSchemaStreams(Iterable<InputStream> schemasStreams) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(schemasStreams);
         _schemas = new ArrayList<>();
         for (InputStream schemasStream : schemasStreams) {
@@ -284,28 +292,28 @@ public class EmbeddedUnboundIDLdapServer {
     }
 
     public EmbeddedUnboundIDLdapServer addSchema(InputStream schema) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(schema);
         _schemas.add(new SchemaFileSupplier(schema));
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer addSchema(File schema) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(schema);
         _schemas.add(new SchemaFileSupplier(schema));
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer setBindCredentials(Map<String, String> bindCredentials) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(bindCredentials);
         _bindCredentials = bindCredentials;
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer addBindCredentials(String bindUser, String bindPassword) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(bindUser);
         requireNonNull(bindPassword);
         _bindCredentials.put(bindUser, bindPassword);
@@ -313,14 +321,14 @@ public class EmbeddedUnboundIDLdapServer {
     }
 
     public EmbeddedUnboundIDLdapServer setRootDN(String rootDN) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(rootDN);
         _rootDNs = Lists.newArrayList(rootDN);
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer setRootDNs(String firstRootDN, String... restRootDNs) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(firstRootDN);
         requireNonNull(restRootDNs);
         _rootDNs = Lists.newArrayList(Lists.asList(firstRootDN, restRootDNs));
@@ -328,27 +336,27 @@ public class EmbeddedUnboundIDLdapServer {
     }
 
     public EmbeddedUnboundIDLdapServer setRootDNs(List<String> rootDNs) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(rootDNs);
         _rootDNs = rootDNs;
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer addRootDN(String rootDN) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         requireNonNull(rootDN);
         _rootDNs.add(rootDN);
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer setIncludeStandardSchema(boolean includeStandardSchema) {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         _includeStandardSchema = includeStandardSchema;
         return this;
     }
 
     public EmbeddedUnboundIDLdapServer includeStandardSchema() {
-        checkState(!_initialized, INSTANCE_ALREADY_INITIALIZED);
+        assertUninitialized();
         _includeStandardSchema = true;
         return this;
     }

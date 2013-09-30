@@ -15,74 +15,56 @@ import org.adsync4j.gradle.Libs
 import org.adsync4j.gradle.Projects
 
 import static org.adsync4j.gradle.GradleUtils.addDependencies
+import static org.adsync4j.gradle.UnboundIdSdkUnsealingHelper.obtainUnsealedUnboundIdSdk
 
 Project prj = project
-
-prj.apply plugin: 'groovy'
 
 def unboundidClient_noLdapSdk = prj.dependencies.create(Projects.unboundidClient) {
     ModuleDependency dependency ->
         dependency.exclude group: 'com.unboundid', module: 'unboundid-ldapsdk'
 }
 
+def unsealedUnboundIdSdkLocation =
+    "${prj.rootProject.rootDir.absolutePath}/unversioned/unboundid-ldapsdk-${Libs.Versions.unboundid}-UNSEALED.jar"
+
 addDependencies(prj, [
         testCompile: [
                 Libs.groovy,
                 Libs.hamcrest,
                 Libs.spock,
-                Libs.spock_spring,
-                Libs.spring_test,
-                Libs.spring_context,
+                Libs.spockSpring,
+                Libs.springTest,
+                Libs.springContext,
                 Projects.core,
                 Projects.testUtils,
                 unboundidClient_noLdapSdk,
-                prj.files("lib/unboundid-ldapsdk-2.3.3-nonsealed.jar"),
+                prj.files(unsealedUnboundIdSdkLocation),
         ],
 
         testRuntime: [
-                Libs.slf4j_bridge_jul,
-                Libs.slf4j_bridge_jcl,
+                Libs.logback,
+                Libs.slf4jBridgeJUL,
+                Libs.slf4jBridgeJCL,
         ],
 ])
+
+// normal test task performs system test against an in-memory ldap server that's mocking the behavior of a real Active Directory
+prj.tasks['test'].configure { Test testTask ->
+    testTask.jvmArgs('-Dspring.profiles.active=inMemoryLdapServer')
+}
+
+Task unsealedUnboundIdSdk = prj.task('unsealedUnboundIdSdk') { Task task ->
+    task.outputs.file(unsealedUnboundIdSdkLocation)
+    task.doFirst {
+        if (!new File(unsealedUnboundIdSdkLocation).exists()) {
+            obtainUnsealedUnboundIdSdk(prj, unsealedUnboundIdSdkLocation)
+        }
+    }
+}
+
+prj.tasks['compileTestJava'].dependsOn(unsealedUnboundIdSdk)
 
 //SourceSetContainer sourceSets = prj.sourceSets
 //def test = sourceSets['test']
 //test.compileClasspath = reorderProjectResourcesBeforeExternalFiles(test.compileClasspath, prj)
 //test.runtimeClasspath = reorderProjectResourcesBeforeExternalFiles(test.runtimeClasspath, prj)
-
-prj.tasks.create(name: 'testAgainstRealActiveDirectory', type: Test) { Test testTask ->
-    testTask.jvmArgs '-Dspring.profiles.active=realActiveDirectory'
-}
-
-prj.tasks['test'].configure { Test testTask ->
-    def inMemoPropertiesFile
-
-    String  inMemoPropertiesLocationFromCLI = testTask.systemProperties['inMemoPropertiesLocation']
-
-    if (inMemoPropertiesLocationFromCLI) {
-        inMemoPropertiesFile = new File(inMemoPropertiesLocationFromCLI)
-        assert inMemoPropertiesFile.exists()
-        testTask.jvmArgs "-DinMemoPropertiesLocation=file://$inMemoPropertiesLocationFromCLI"
-    } else {
-        def inMemoPropertiesResource = 'org/adsync4j/impl/in-memory-ldap.properties'
-        testTask.jvmArgs "-DinMemoPropertiesLocation=classpath:/$inMemoPropertiesResource"
-        inMemoPropertiesFile = prj.file("src/test/resources/$inMemoPropertiesResource")
-    }
-
-    def inMemoProperties = new Properties()
-    inMemoPropertiesFile.withInputStream { stream ->
-        inMemoProperties.load(stream)
-    }
-
-    def highestCommittedUSN = inMemoProperties['adRootDse.highestCommittedUSN']
-    def dsServiceName = inMemoProperties['adRootDse.dsServiceName']
-
-    assert highestCommittedUSN
-    assert dsServiceName
-
-    testTask.jvmArgs([
-            '-Dspring.profiles.active=inMemoryLdapServer',
-            "-DadRootDse.highestCommittedUSN=$highestCommittedUSN",
-            "-DadRootDse.dsServiceName=$dsServiceName",
-    ])
-}

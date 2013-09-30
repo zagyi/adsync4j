@@ -15,6 +15,8 @@ import org.adsync4j.gradle.GradleUtils
 import org.adsync4j.gradle.Libs
 import org.adsync4j.gradle.Projects
 
+import static org.adsync4j.gradle.Projects.systemTesting
+
 Project core = project
 
 core.apply plugin: 'maven'
@@ -24,14 +26,16 @@ archivesBaseName = 'adsync4j-core'
 
 GradleUtils.addDependencies(core, [
         compile: [
-                Libs.guava,
-                Libs.jsr305_annotations,
-                Libs.slf4j_api,
+                Libs.jsr305Annotations,
+                Libs.slf4jApi,
         ],
 
         testCompile: [
                 Libs.spock,
                 Libs.groovy,
+                Libs.logback,
                 Projects.testUtils
         ],
 ])
+
+core.tasks['check'].dependsOn(systemTesting.tasks['check'])

@@ -11,11 +11,25 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.impl;
 
 import java.util.UUID;
 
+/**
+ * Utility class dealing with the {@link UUID}s.
+ */
 public class UUIDUtils {
+
+    /**
+     * Converts a byte array into an {@link UUID} object.
+     * <p/>
+     * Microsoft stores GUIDs in a binary format that differs from the RFC standard of UUIDs (RFC #4122). (See details
+     * at http://en.wikipedia.org/wiki/Globally_unique_identifier) This function takes a byte array read from Active
+     * Directory and correctly decodes it as a {@link UUID} object.
+     *
+     * @param bytes Byte array received as en entry attribute from Active Directory.
+     * @return {@link UUID} object created from the byte array, or null in case the passed array is not exactly 16 bytes long.
+     */
     public static UUID bytesToUUID(byte[] bytes) {
         if (bytes != null && bytes.length == 16) {
             long msb = bytes[3] & 0xFF;

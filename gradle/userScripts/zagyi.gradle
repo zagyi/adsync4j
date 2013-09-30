@@ -1,33 +1,90 @@
 import org.adsync4j.gradle.Projects
+import org.gradle.api.artifacts.maven.GroovyMavenDeployer
+import org.gradle.api.artifacts.maven.MavenDeployment
+import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.plugins.signing.Sign
+import org.gradle.plugins.signing.SigningExtension
 
+import static org.adsync4j.gradle.GradleUtils.*
 import static org.adsync4j.gradle.Projects.systemTesting
 
 Project prj = project
 
-prj.evaluationDependsOn(systemTesting.path)
-
-systemTesting.tasks['testAgainstRealActiveDirectory'].configure { Test testTask ->
-    def dir = '../unversioned/systemTest'
-    def adPropertiesLocation = systemTesting.file("$dir/active-directory.properties").absolutePath
-    def expectedEntriesFile = systemTesting.file("$dir/expectedEntries.groovycfg").absolutePath
-    testTask.jvmArgs ([
-            "-DadPropertiesLocation=file://$adPropertiesLocation",
-            "-DexpectedEntriesFile=file://$expectedEntriesFile",
+systemTesting.tasks.create(
+        description: 'Runs system tests against the real infrastructure.',
+        name: 'testAgainstRealActiveDirectory',
+        type: Test) { Test testTask ->
+    def dir = "${prj.rootDir.absolutePath}/unversioned/systemTest"
+    testTask.jvmArgs([
+            '-Dspring.profiles.active=realActiveDirectory',
+            "-DadPropertiesLocation=file://$dir/active-directory.properties",
+            "-DtestFixtures=file://$dir/testFixtures.groovycfg",
+            "-DdelayTests", // painful workaround to avoid exception from LDAPConnection.reconnect()
     ])
 }
 
-prj.rootProject.tasks.create('taskDirs') {
-    def tasksBaseDir = prj.rootProject.file('gradle/tasks')
-    tasksBaseDir.deleteDir()
-    prj.rootProject.allprojects.each {
-        def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
-        it.tasks.each { task ->
-            def taskDir = new File(prjTaskBaseDir, task.name)
-            taskDir.mkdirs()
-        }
+[Projects.core, Projects.unboundidClient].each { mavenPrj ->
+    // sonatype username and password is declared in ~/.gradle/gradle.properties in my environment
+    setupMavenPublishing(mavenPrj, sonatypeUsername, sonatypePassword)
+}
+
+def resolveMavenRepositoryUrl(Project mavenPrj) {
+    System.getProperty('mvnUrl') ?: isSnapshotVersion(mavenPrj) ?
+        ext(mavenPrj.rootProject, 'userLocalMavenRepository') :
+        'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+}
+
+def setupMavenPublishing(Project mavenPrj, String sonatypeUsername, String sonatypePassword) {
+    mavenPrj.apply plugin: 'signing'
+
+    GroovyMavenDeployer archivesDeployer = getMavenDeployerForConfiguration(mavenPrj, 'archives')
+
+    String repositoryUrl = resolveMavenRepositoryUrl(mavenPrj)
+    configureRemoteRepository(archivesDeployer, repositoryUrl, sonatypeUsername, sonatypePassword)
+
+    // staticPomContent is declared in gradle/pom.gradle
+    archivesDeployer.pom(staticPomContent)
+
+    SigningExtension signingExtension = mavenPrj.extensions.getByType(SigningExtension)
+
+    // create signArchives which is a task that signs all artifacts in the archives configuration
+    Sign signArchives = signingExtension.sign(mavenPrj.configurations['archives'])[0]
+
+    // make uploadArchives task depend on signArchives
+    mavenPrj.tasks['uploadArchives'].dependsOn(signArchives)
+
+    // sign the pom file too before deployment
+    archivesDeployer.beforeDeployment { MavenDeployment deployment ->
+        signingExtension.signPom(deployment)
     }
 }
 
-prj.rootProject.tasks['clean'].doLast {
-    prj.rootProject.file('gradle/tasks').deleteDir()
+boolean isSnapshotVersion(Project prj) {
+    (prj.version as String).endsWith('-SNAPSHOT')
+}
+
+prj.tasks.create(
+        description: 'Creates a directory structure corresponding to the projects\' existing tasks. ' +
+                'Useful to implement a poor man\'s shell completion for task names.',
+        name: 'taskDirs') { Task task ->
+
+    def destination = 'gradle/tasks'
+
+    task.outputs.dir(destination)
+
+    task.doLast {
+        def tasksBaseDir = prj.file(destination)
+        tasksBaseDir.deleteDir()
+
+        prj.allprojects.each {
+            def prjTaskBaseDir = new File(tasksBaseDir, it.path.substring(1))
+
+            // collect all tasks including implicit ones as well (like 'dependencies', 'tasks')
+            def allTasks = [* it.tasks.collect(), * (it as ProjectInternal).implicitTasks.collect()]
+
+            allTasks.each { Task t ->
+                new File(prjTaskBaseDir, t.name).mkdirs()
+            }
+        }
+    }
 }

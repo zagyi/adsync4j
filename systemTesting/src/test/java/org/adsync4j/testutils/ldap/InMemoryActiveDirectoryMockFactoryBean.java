@@ -13,9 +13,20 @@
  ******************************************************************************/
 package org.adsync4j.testutils.ldap;
 
+import java.util.Map;
+
 public class InMemoryActiveDirectoryMockFactoryBean extends EmbeddedLdapServerFactoryBean {
+
+    private Map<String, String> _rootDSEAttributes;
+
     @Override
     protected EmbeddedUnboundIDLdapServer createEmbeddedUnboundIDLdapServer() {
-        return new InMemoryActiveDirectoryMock();
+        InMemoryActiveDirectoryMock activeDirectoryMock = new InMemoryActiveDirectoryMock();
+        activeDirectoryMock.setRootDSEAttributes(_rootDSEAttributes);
+        return activeDirectoryMock;
+    }
+
+    public void setRootDSEAttributes(Map<String, String> rootDSEAttributes) {
+        _rootDSEAttributes = rootDSEAttributes;
     }
 }

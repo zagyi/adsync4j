@@ -17,28 +17,34 @@ import com.google.common.collect.Lists
 import com.unboundid.asn1.ASN1OctetString
 import com.unboundid.ldap.sdk.*
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl
-import org.adsync4j.LdapClientException
+import org.adsync4j.api.LdapClientException
 import spock.lang.Specification
+
+import static org.adsync4j.unboundid.UnboundIDTestHelper.*
 
 class PagingSearchIteratorSpec extends Specification {
 
     LDAPInterface connection = Mock(LDAPInterface)
 
-    def 'hasNext() invokes the initial search if it is called before next()'() {
-        given:
+    def 'first iteration does not perform a search'() {
+        // first page is always fetched by the time the PagingSearchIterator is created, therefore no communication is
+        // done on the connection when all the search results fit on the first (already fetched) page
 
-        def psi = new PagingSearchIterator(connection, org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE)
+        given:
+        def firstAndOnlyPage = ['page1/1', 'page1/2']
+        def psi = buildPSI([firstAndOnlyPage])
 
         when:
-        psi.hasNext()
+        def actualFirstPage = psi.next()
 
         then:
-        1 * connection.search(org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest) >> org.adsync4j.unboundid.UnboundIDTestHelper.createSearchResult(results: [], isLastPage: true)
+        actualFirstPage == firstAndOnlyPage
+        0 * connection._
     }
 
     def 'hasNext() returns false for the last page'() {
         given:
-        PagingSearchIterator psi = buildPSI([['page1/1', 'page1/2'], ['page2/1']])
+        PagingSearchIterator psi = buildPSI([['page1:entry1', 'page1:entry2'], ['page2:entry1']])
 
         expect:
         psi.hasNext()
@@ -77,14 +83,26 @@ class PagingSearchIteratorSpec extends Specification {
 
         where:
         totalNumOfEntries | pageSize
+        4                 | 2
         5                 | 2
         1                 | 8
         7                 | 7
     }
 
-    def 'fails when calling next() after getting last page'() {
+    def 'cannot create iterator without paging control'() {
         given:
-        PagingSearchIterator psi = buildPSI([['page1/1', 'page1/2']])
+        def searchRequestWithoutPagingControl = new SearchRequest('', SearchScope.BASE, 'foo=bar')
+
+        when:
+        new PagingSearchIterator(null, searchRequestWithoutPagingControl, createSearchResult([], true))
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def 'fails when calling next() after getting the last page'() {
+        given:
+        PagingSearchIterator psi = buildPSI([['page1:entry1', 'page1:entry2']])
 
         when:
         psi.next()
@@ -94,83 +112,52 @@ class PagingSearchIteratorSpec extends Specification {
         thrown NoSuchElementException
     }
 
-    def 'fetchNextPage() fails when called twice before calling next()'() {
-        given:
-        PagingSearchIterator psi = buildPSI([['page1']])
-        psi.hasNext();
-
-        when:
-        psi.fetchNextPage()
-
-        then:
-        thrown IllegalStateException
-    }
-
     def 'propagates UnboundID-specific exception wrapped in LdapClientException'() {
         given:
+        // passing a 'firstResult' to the iterator which indicates that there is more pages to fetch
+        def psi = new PagingSearchIterator(connection, DUMMY_SEARCH_REQUEST, createSearchResult(['page1:entry1'], false))
+        // a timeout exception during search
         1 * connection.search((SearchRequest) _) >> { throw new LDAPSearchException(ResultCode.TIMEOUT, '') }
-        def psi = new PagingSearchIterator(connection, org.adsync4j.unboundid.UnboundIDTestHelper.dummySearchRequest, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE)
 
         when:
-        psi.hasNext()
+        psi.collect()
 
         then:
         thrown LdapClientException
     }
 
-    def 'checking post-conditions of fetchNextPage()'() {
+    def 'check results of getPagingCookieForNextIteration'() {
         given:
-        def pages = [['page1/1', 'page1/2']]
-
-        PagingSearchIterator psi = buildPSI(pages)
+        Control[] controls = pagingCtrl ? [pagingCtrl] : []
+        def searchResult = new SearchResult(-1, null, null, null, null, 0, 0, controls)
 
         when:
-        def actualPage = psi.fetchNextPage()
+        def cookie = PagingSearchIterator.getPagingCookieForNextIteration(searchResult)
 
         then:
-        actualPage == pages[0]
-        psi._currentPage == actualPage
-        psi._numOfPagesFetched == 1
-        psi._isLastPageFetched
-        psi._numOfPagesServed == 0
-        psi._pagingCookie.valueLength == 0
-    }
-
-    def 'checking results of getPagingCookieForNextIteration'() {
-        given:
-        def searchResult = new SearchResult(-1, null, null, null, null, 0, 0, [pagingCtrl] as Control[])
-        def psi = new PagingSearchIterator(null, null, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE)
-
-        expect:
-        psi.getPagingCookieForNextIteration(searchResult).valueLength == cookieLength
+        cookie == expectedCookie
 
         where:
-        pagingCtrl                                                      | cookieLength
-        new SimplePagedResultsControl(org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE, org.adsync4j.unboundid.UnboundIDTestHelper.PAGING_COOKIE)         | org.adsync4j.unboundid.UnboundIDTestHelper.PAGING_COOKIE_VALUE.length()
-        new SimplePagedResultsControl(org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE, new ASN1OctetString()) | 0
-        new SimplePagedResultsControl(org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE, null)                  | 0
+        pagingCtrl                                                      | expectedCookie
+        new SimplePagedResultsControl(PAGE_SIZE, PAGING_COOKIE)         | PAGING_COOKIE
+        new SimplePagedResultsControl(PAGE_SIZE, new ASN1OctetString()) | null
+        new SimplePagedResultsControl(PAGE_SIZE, null)                  | null
+        null                                                            | null
     }
 
-    // TODO: refactor code argument matchers to assertions on captured arguments
-    @SuppressWarnings("GroovyAssignabilityCheck")
-    PagingSearchIterator buildPSI(List pages) {
-        def listOfSearchEntryLists = org.adsync4j.unboundid.UnboundIDTestHelper.wrapSearchEntryListsInResultObjects(pages)
-
-        // first invocation should not have a paging cookie
-        if (listOfSearchEntryLists.size() > 0) {
-            1 * connection.search({ org.adsync4j.unboundid.UnboundIDTestHelper.hasMatchingPageCookie(it, null) }) >> listOfSearchEntryLists[0]
-            listOfSearchEntryLists.remove(0)
-        }
+    PagingSearchIterator buildPSI(List pages = [[]]) {
+        List<SearchResult> pagedResults = createPagedSearchResults(pages)
+        SearchResult firstResult = pagedResults.remove(0)
 
         // unsigned right shift operator ('>>>') causes the mock take the right hand side
         // expression as a _list_ of responses to be returned in subsequent calls
-        listOfSearchEntryLists.size() *
-                connection.search({ org.adsync4j.unboundid.UnboundIDTestHelper.hasMatchingPageCookie(it, org.adsync4j.unboundid.UnboundIDTestHelper.PAGING_COOKIE) }) >>> listOfSearchEntryLists
+        pagedResults.size() *
+                connection.search({ searchRequestWithPagingCookie(it, PAGING_COOKIE) }) >>> pagedResults
 
-        // the following lines ensure that any interaction with the below mentioned mocks
-        // other than those explicitly specified in feature methods will be reported as errors
+        // further interactions with the connection (other than those explicitly specified in feature methods)
+        // will be reported as errors
         0 * connection.search(_)
 
-        new PagingSearchIterator(connection, UnboundIDTestHelper.dummySearchRequest, org.adsync4j.unboundid.UnboundIDTestHelper.PAGE_SIZE)
+        new PagingSearchIterator(connection, DUMMY_SEARCH_REQUEST, firstResult)
     }
 }

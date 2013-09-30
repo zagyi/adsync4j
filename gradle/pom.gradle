@@ -1,0 +1,29 @@
+ext.staticPomContent = {
+    project {
+        name 'ADSync4J'
+        packaging 'jar'
+        description 'ADSync4J is a lightweight Java library for synchronizing content from MS Active Directory.'
+        url 'http://adsync4j.org/'
+
+        scm {
+            url 'git@github.com:zagyi/adsync4j.git'
+            connection 'scm:git:git@github.com:zagyi/adsync4j.git'
+            developerConnection 'scm:git:git@github.com:zagyi/adsync4j.git'
+        }
+
+        licenses {
+            license {
+                name 'The Eclipse Public License v1.0'
+                url 'http://www.eclipse.org/legal/epl-v10.html'
+                distribution 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id 'zagyi'
+                name 'Balazs Zagyvai'
+            }
+        }
+    }
+}

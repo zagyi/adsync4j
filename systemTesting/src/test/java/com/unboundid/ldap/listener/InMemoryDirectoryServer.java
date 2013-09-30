@@ -151,7 +151,7 @@ public class InMemoryDirectoryServer
 
   // A read-only representation of the configuration used to create this
   // in-memory directory server.
-  private final ReadOnlyInMemoryDirectoryServerConfig config;
+  protected final InMemoryDirectoryServerConfig config;
 
 
 
@@ -189,7 +189,7 @@ public class InMemoryDirectoryServer
   {
     Validator.ensureNotNull(cfg);
 
-    config = new ReadOnlyInMemoryDirectoryServerConfig(cfg);
+    config = cfg;//new ReadOnlyInMemoryDirectoryServerConfig(cfg);
     inMemoryHandler = createLDAPListenerRequestHandler(config);
 
     LDAPListenerRequestHandler requestHandler = inMemoryHandler;
@@ -247,8 +247,16 @@ public class InMemoryDirectoryServer
     }
   }
 
+    /**
+     * Creates an {@link InMemoryRequestHandler}. This method has been factored out from the constructor,
+     * in order to allow subclasses to create a customized request handler instead of the default one.
+     *
+     * @param config
+     * @return
+     * @throws LDAPException
+     */
     protected InMemoryRequestHandler createLDAPListenerRequestHandler(
-            ReadOnlyInMemoryDirectoryServerConfig config) throws LDAPException
+            InMemoryDirectoryServerConfig config) throws LDAPException
     {
         return new InMemoryRequestHandler(config);
     }
@@ -466,7 +474,7 @@ public class InMemoryDirectoryServer
    * @return  A read-only representation of the configuration used to create
    *          this in-memory directory server instance.
    */
-  public ReadOnlyInMemoryDirectoryServerConfig getConfig()
+  public InMemoryDirectoryServerConfig getConfig()
   {
     return config;
   }

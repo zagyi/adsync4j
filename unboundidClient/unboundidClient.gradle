@@ -18,8 +18,6 @@ import static org.adsync4j.gradle.GradleUtils.addDependencies
 
 Project unboundid = project
 
-unboundid.apply plugin: 'groovy'
-unboundid.apply plugin: 'maven'
 unboundid.apply from: "$unboundid.rootDir/gradle/configureIntegrationTestSourceSet.gradle"
 
 archivesBaseName = 'adsync4j-unboundid'
@@ -27,13 +25,14 @@ archivesBaseName = 'adsync4j-unboundid'
 addDependencies(unboundid, [
         compile: [
                 Projects.core,
+                Libs.jsr305Annotations,
+                Libs.guava,
+                Libs.slf4jExt,
                 Libs.unboundid,
-                Libs.jsr305_annotations,
-                Libs.slf4j_ext,
         ],
 
         runtime: [
-                Libs.slf4j_bridge_jul,
+                Libs.slf4jBridgeJUL,
         ],
 
         testCompile: [
@@ -50,13 +49,13 @@ addDependencies(unboundid, [
                 Libs.guava,
                 Libs.hamcrest,
                 Libs.junit,
-                Libs.spring_beans,
-                Libs.spring_test,
-                Libs.spring_context,
+                Libs.springBeans,
+                Libs.springContext,
+                Libs.springTest,
         ],
 
         integrationTestRuntime: [
-                Libs.spock_spring,
-                Libs.slf4j_bridge_jcl,
+                Libs.slf4jBridgeJCL,
+                Libs.spockSpring,
         ],
 ])

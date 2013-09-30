@@ -13,122 +13,145 @@
  ***************************************************************************** */
 package org.adsync4j.unboundid;
 
-import com.google.common.base.Preconditions;
 import com.unboundid.asn1.ASN1OctetString;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
-import org.adsync4j.LdapClientException;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
+import org.adsync4j.api.LdapClientException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.unboundid.ldap.sdk.controls.SimplePagedResultsControl.PAGED_RESULTS_OID;
+
 /**
- * Iterator returning a single page (lists) of {@link com.unboundid.ldap.sdk.SearchResultEntry} elements on each iteration.
- * It repeatedly executes the LDAP query with a limit for the number of entries to be fetched in a single page given at
- * construction time.
+ * Iterator returning a single page of {@link com.unboundid.ldap.sdk.SearchResultEntry} elements on each iteration.
+ * Clients are expected to build a search request that includes a {@link SimplePagedResultsControl}, and to make an initial
+ * call to {@link LDAPInterface#search(com.unboundid.ldap.sdk.SearchRequest)} with it. The iterator can then be constructed
+ * with the {@link SearchResult} returned to this initial search invocation.
+ * <p/>
+ * Subsequent searches are executed by the iterator when {@link PagingSearchIterator#next next()} is called (using the same page
+ * size as that of the initial search request).
  */
 public class PagingSearchIterator implements Iterator<List<SearchResultEntry>> {
 
-    private final static XLogger LOG = XLoggerFactory.getXLogger(PagingSearchIterator.class);
+    private final static Logger LOG = LoggerFactory.getLogger(PagingSearchIterator.class);
 
     private final LDAPInterface _connection;
     private final SearchRequest _searchRequest;
     private final int _pageSize;
 
-    boolean _isLastPageFetched;
+    @Nullable
     ASN1OctetString _pagingCookie = null;
-
-    int _numOfPagesServed = 0;
-    int _numOfPagesFetched = 0;
-    List<SearchResultEntry> _currentPage = null;
+    List<SearchResultEntry> _firstPage;
 
     /**
      * @param connection    The connection on which the search request is to be executed.
-     * @param searchRequest The search request (without paging controls).
-     * @param pageSize      Maximum number of entries to be fetched in a single page (in one iteration).
+     * @param searchRequest The search request containing a {@link SimplePagedResultsControl}.
+     * @param firstResult   The result of the initial search request.
      */
-    public PagingSearchIterator(LDAPInterface connection, SearchRequest searchRequest, int pageSize) {
+    public PagingSearchIterator(LDAPInterface connection, SearchRequest searchRequest, SearchResult firstResult) {
         _connection = connection;
         _searchRequest = searchRequest;
-        _pageSize = pageSize;
+        _pageSize = getPageSize(searchRequest);
+        _firstPage = firstResult.getSearchEntries();
+        _pagingCookie = getPagingCookieForNextIteration(firstResult);
+        LOG.debug("Instance created with an initial search result that indicates there will be {}more pages.",
+                _pagingCookie == null ? "NO " : "");
+    }
+
+    /**
+     * @param searchRequest A {@link SearchRequest} that contains the {@link SimplePagedResultsControl} control object.
+     * @return The page size specified in the {@link SimplePagedResultsControl} control object.
+     */
+    private static int getPageSize(SearchRequest searchRequest) {
+        SimplePagedResultsControl pagingControl = (SimplePagedResultsControl) searchRequest.getControl(PAGED_RESULTS_OID);
+
+        if (pagingControl == null) {
+            throw new IllegalArgumentException("The search request must contain a SimplePagedResultsControl control object.");
+        }
+
+        return pagingControl.getSize();
     }
 
     @Override
     public boolean hasNext() {
-        if (_numOfPagesFetched == 0) {
-            fetchNextPage();
+        boolean isFirstPageAlreadyReturned = _firstPage == null;
+        if (isFirstPageAlreadyReturned) {
+            // the server indicates the last page by not including a paging cookie in the response (see SimplePagedResultsControl)
+            boolean didServerReturnAPagingCookie = _pagingCookie != null && _pagingCookie.getValueLength() > 0;
+            return didServerReturnAPagingCookie;
+        } else {
+            return !_firstPage.isEmpty();
         }
-
-        boolean isCurrentPageEmpty = _currentPage == null || _currentPage.isEmpty();
-
-        return _numOfPagesServed == 0
-                          ? !isCurrentPageEmpty
-                          : !_isLastPageFetched;
     }
 
     @Override
     public List<SearchResultEntry> next() {
         if (hasNext()) {
-            if (shouldFetchNextPage()) {
-                fetchNextPage();
+            if (_firstPage == null) {
+                return fetchNextPage();
+            } else {
+                return getAndReleaseFirstPage();
             }
-
-            ++_numOfPagesServed;
-            return _currentPage;
         }
-
         throw new NoSuchElementException();
     }
 
-    /*package*/ List<SearchResultEntry> fetchNextPage() {
-        Preconditions.checkState(
-                _numOfPagesFetched - _numOfPagesServed < 1,
-                "Attempted to fetch the next page (#%d) while the previous one has not been consumed yet.",
-                _numOfPagesFetched
-        );
+    /**
+     * Simply returns the reference to the first page of search results stored in {@code _firstPage},
+     * but also nulls out that reference in order to avoid retaining those entries in memory longer than necessary.
+     *
+     * @return The search results referenced by {@code _firstPage}.
+     */
+    private List<SearchResultEntry> getAndReleaseFirstPage() {
+        List<SearchResultEntry> firstPage = _firstPage;
+        _firstPage = null;
+        return firstPage;
 
+    }
+
+    /**
+     * Performs a search operation to fetch the next page of results. Uses the cached paging cookie for the request,
+     * and updates it with the paging cookie received in the response.
+     *
+     * @return The next page of results.
+     */
+    private List<SearchResultEntry> fetchNextPage() {
         _searchRequest.replaceControl(new SimplePagedResultsControl(_pageSize, _pagingCookie));
-
-        SearchResult searchResult;
         try {
-            LOG.trace("instance: {}, page: #{}, with cookie: {}",
-                    this.hashCode(),
-                    _numOfPagesFetched,
-                    _pagingCookie != null && _pagingCookie.getValueLength() > 0);
-
-            searchResult = _connection.search(_searchRequest);
+            LOG.debug("Fetching subsequent result page.");
+            SearchResult searchResult = _connection.search(_searchRequest);
             _pagingCookie = getPagingCookieForNextIteration(searchResult);
-            ++_numOfPagesFetched;
+            LOG.debug("Search result page received, response indicates it's {} page.",
+                    _pagingCookie == null ? "the final" : "an intermediate");
+            return searchResult.getSearchEntries();
+        } catch (LDAPSearchException e) {
+            throw new LdapClientException(e);
+        }
+    }
+
+    /**
+     * Extracts the paging cookie from the {@link SearchResult}.
+     *
+     * @param searchResult The {@link SearchResult} to extract the paging cookie from.
+     * @return The paging cookie contained in the {@link SimplePagedResultsControl} of the {@link SearchResult} if any,
+     *         {@code null} otherwise.
+     */
+    @Nullable
+    /*package*/ static ASN1OctetString getPagingCookieForNextIteration(@Nonnull SearchResult searchResult) {
+        try {
+            SimplePagedResultsControl pagedCtrlResponse = SimplePagedResultsControl.get(searchResult);
+            ASN1OctetString pagingCookie = pagedCtrlResponse == null ? null : pagedCtrlResponse.getCookie();
+            return pagingCookie == null ? null :
+                   pagingCookie.getValueLength() == 0 ? null : pagingCookie;
         } catch (LDAPException e) {
             throw new LdapClientException(e);
         }
-
-        _isLastPageFetched = _pagingCookie == null || _pagingCookie.getValueLength() == 0;
-        _currentPage = searchResult.getSearchEntries();
-
-        if (_numOfPagesFetched > 1 && (_currentPage == null || _currentPage.isEmpty())) {
-            LOG.warn("Ldap paged search returned null or empty result list when fetching the next page, " +
-                     "which normally should never happen. SearchResult object returned: {}",
-                    searchResult);
-        }
-
-        return _currentPage;
-    }
-
-    /*package*/ ASN1OctetString getPagingCookieForNextIteration(@Nonnull SearchResult searchResult) throws LDAPException {
-        SimplePagedResultsControl pagedCtrlResponse = SimplePagedResultsControl.get(searchResult);
-        return pagedCtrlResponse == null
-               ? null
-               : pagedCtrlResponse.getCookie();
-    }
-
-    private boolean shouldFetchNextPage() {
-        assert _numOfPagesServed <= _numOfPagesFetched;
-        return _numOfPagesServed == _numOfPagesFetched;
     }
 
     @Override

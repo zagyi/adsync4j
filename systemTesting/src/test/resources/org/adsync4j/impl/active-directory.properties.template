@@ -21,8 +21,8 @@ bindPassword =
 # update sequence number from which to receive entries when doing incremental sync
 highestCommittedUSN =
 
-# attribute of the entry pointed to by the 'dsServiceName' attribute of the root DSE
-invocationId = 5e33c8ac-5038-4dad-be83-a67894cc39d2
+# attribute of the entry pointed to by the 'dsServiceName' attribute of the root DSE (eg. "5e33c8ac-5038-4dad-be83-a67894cc39d2")
+invocationId =
 
 # which attributes to retrieve from AD, e.g. name,distinguishedName,mail
 attributesToSync =
@@ -39,6 +39,5 @@ searchFilter = (&\
 searchDeletedObjectsFilter = (&\
 (objectClass=user)\
 (userAccountControl:1.2.840.113556.1.4.803:=512)\
-(lastKnownParent=OU=Users,DC=yourDomain,DC=com)\
+(lastKnownParent=CN=Users,DC=yourDomain,DC=com)\
 )
-

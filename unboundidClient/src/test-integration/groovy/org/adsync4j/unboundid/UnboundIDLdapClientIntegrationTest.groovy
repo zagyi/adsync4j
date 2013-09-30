@@ -12,6 +12,7 @@
  *     Balazs Zagyvai
  ***************************************************************************** */
 package org.adsync4j.unboundid
+
 import com.unboundid.ldap.sdk.Attribute
 import com.unboundid.ldap.sdk.LDAPConnection
 import com.unboundid.ldap.sdk.LDAPInterface
@@ -77,13 +78,13 @@ class UnboundIDLdapClientIntegrationTest {
     @Test
     public void testSearchDeleted() {
         // given
-        def base = config['searchBase']
+        def rootDN = config['rootDN']
         def filter = config['searchFilter']
         def expectedId = UUID.fromString(config['objectGuidExpectedValue'])
         def expectedIdSet = [expectedId] as Set
 
         // when
-        def deletedUserIdSet = client.searchDeleted(base, filter).collect() as Set
+        def deletedUserIdSet = client.searchDeleted(rootDN, filter).collect() as Set
 
         // then
         assert deletedUserIdSet == expectedIdSet
@@ -106,7 +107,7 @@ class UnboundIDLdapClientIntegrationTest {
     }
 
     static def createConnection(EmbeddedUnboundIDLdapServer server) {
-        PagingLdapConnectionImpl.wrap(new LDAPConnection('localhost', server.port))
+        new PagingLdapConnectionImpl(new LDAPConnection('localhost', server.port))
     }
 
     static def createClient(LDAPInterface connection) {

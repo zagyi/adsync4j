@@ -12,6 +12,7 @@
  *     Balazs Zagyvai
  ***************************************************************************** */
 package org.adsync4j.unboundid
+
 import com.unboundid.ldap.sdk.LDAPConnection
 import com.unboundid.ldap.sdk.SearchRequest
 import com.unboundid.ldap.sdk.SearchScope
@@ -24,7 +25,7 @@ class PagingLdapConnectionImplIntegrationSpec extends Specification {
 
     static final def ROOT_DN = 'dc=example,dc=com'
 
-    PagingLdapConnection pagingConnection
+    PagingLdapConnectionImpl pagingConnection
 
     static def createEmbeddedLdapServer(ldifLocation) {
         def ldif = getResourceAsStreamOrFail(ldifLocation)
@@ -36,7 +37,7 @@ class PagingLdapConnectionImplIntegrationSpec extends Specification {
 
     static def createPagingConnection(EmbeddedUnboundIDLdapServer embeddedLdapServer) {
         LDAPConnection conn = new LDAPConnection('localhost', embeddedLdapServer.port)
-        PagingLdapConnectionImpl.wrap(conn)
+        new PagingLdapConnectionImpl(conn)
     }
 
     def 'retrieve 5 users in pages of 2'() {

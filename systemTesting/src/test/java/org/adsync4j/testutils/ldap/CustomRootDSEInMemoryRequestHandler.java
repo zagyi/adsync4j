@@ -13,7 +13,6 @@
  ******************************************************************************/
 package org.adsync4j.testutils.ldap;
 
-import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryRequestHandler;
 import com.unboundid.ldap.listener.LDAPListenerClientConnection;
 import com.unboundid.ldap.sdk.Entry;
@@ -25,14 +24,19 @@ import java.util.Map;
 
 public class CustomRootDSEInMemoryRequestHandler extends InMemoryRequestHandler {
 
-    private static final String AD_ROOT_DSE_PROPERTY_PREFIX = "adRootDse.";
+    private InMemoryDirectoryServerConfigWithRootDSEAttributes _config;
 
-    public CustomRootDSEInMemoryRequestHandler(InMemoryDirectoryServerConfig config) throws LDAPException {
+    public CustomRootDSEInMemoryRequestHandler(InMemoryDirectoryServerConfigWithRootDSEAttributes config) throws LDAPException {
         super(config);
+        _config = config;
     }
 
-    public CustomRootDSEInMemoryRequestHandler(InMemoryRequestHandler parent, LDAPListenerClientConnection connection) {
+    public CustomRootDSEInMemoryRequestHandler(
+            CustomRootDSEInMemoryRequestHandler parent, LDAPListenerClientConnection connection)
+    {
         super(parent, connection);
+        _config = parent._config;
+
     }
 
     @Override
@@ -49,18 +53,16 @@ public class CustomRootDSEInMemoryRequestHandler extends InMemoryRequestHandler 
     }
 
     private void addExtendedRootDSEAttributes(Entry rootDSEEntry) {
-        for (Map.Entry<Object, Object> systemProperty : System.getProperties().entrySet()) {
-            String propertyName = (String) systemProperty.getKey();
-            String propertyValue = (String) systemProperty.getValue();
-            if (propertyName.startsWith(AD_ROOT_DSE_PROPERTY_PREFIX)) {
-                addExtendedRootDSEAttribute(
-                        rootDSEEntry, propertyName.substring(AD_ROOT_DSE_PROPERTY_PREFIX.length()), propertyValue);
+        if (_config.getRootDSEAttributes() != null) {
+            for (Map.Entry<String, String> rootDSEAttribute : _config.getRootDSEAttributes().entrySet()) {
+                String attributeName = rootDSEAttribute.getKey();
+                String attributeValue = rootDSEAttribute.getValue();
+
+                rootDSEEntry.addAttribute(attributeName, attributeValue);
+
+                Debug.getLogger().finer(
+                        String.format("Added extended Root DSE attribute: %s = %s", attributeName, attributeValue));
             }
         }
-    }
-
-    private void addExtendedRootDSEAttribute(Entry rootDSEEntry, String propertyName, String propertyValue) {
-        rootDSEEntry.addAttribute(propertyName, propertyValue);
-        Debug.getLogger().info(String.format("Added extended Root DSE attribute: %s = %s", propertyName, propertyValue));
     }
 }

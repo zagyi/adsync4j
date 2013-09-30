@@ -11,26 +11,17 @@
  * Contributors:
  *     Balazs Zagyvai
  ******************************************************************************/
-package org.adsync4j;
+package org.adsync4j.api;
 
-import java.util.List;
-import java.util.UUID;
+/**
+ * Abstract base class for concrete exceptions representing specific error conditions during incremental synchronization.
+ */
+public abstract class FullSyncRequiredException extends LdapClientException {
 
-public interface DomainControllerAffiliation extends LdapConnectionDetails {
+    protected FullSyncRequiredException() {
+    }
 
-    UUID getInvocationId();
-
-    Long getHighestCommittedUSN();
-
-    /**
-     * @return DN of the node designating the subtree which is the scope of the sync operations (e.g. {@code
-     *         CN=Users,DC=example,DC=com}).
-     */
-    String getSyncBaseDN();
-
-    String getSearchFilter();
-
-    String getSearchDeletedObjectsFilter();
-
-    List<String> getAttributesToSync();
+    protected FullSyncRequiredException(String message) {
+        super(message);
+    }
 }

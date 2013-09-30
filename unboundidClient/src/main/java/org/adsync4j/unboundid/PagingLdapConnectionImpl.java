@@ -14,84 +14,54 @@
 package org.adsync4j.unboundid;
 
 import com.google.common.collect.Iterables;
-import com.unboundid.ldap.sdk.LDAPInterface;
-import com.unboundid.ldap.sdk.SearchRequest;
-import com.unboundid.ldap.sdk.SearchResultEntry;
+import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Helper class that executes {@link SearchRequest}s with paging while shielding the caller from the complexity of managing the
- * {@link SimplePagedResultsControl paging search control object} and the paging cookie. The client code stays completely
- * unaware of the fact that search results are fetched by pages in multiple subsequent steps.
- * <p/>
- * Doing a paging search then becomes as simple as:
- * <pre>
- * PagingSearchExecutor pagingSearchExecutor = new PagingSearchExecutor(getConnection(), searchRequest, _pageSize);
- * for (SearchResultEntry entry : pagingSearchExecutor.search()) {
- *     // process the entry
- * }
- * </pre>
+ * Implementation of {@link PagingLdapConnection} that is basically a decorator around {@link LDAPConnection} which can execute
+ * paged search requests.
  */
 @ThreadSafe
-class PagingLdapConnectionImpl implements PagingLdapSearcher, InvocationHandler {
-    private final LDAPInterface _delegateConnection;
+public class PagingLdapConnectionImpl extends AbstractUnboundIDLdapConnectionDecorator implements PagingLdapConnection {
+
+    private final static Logger LOG = LoggerFactory.getLogger(PagingLdapConnectionImpl.class);
 
     /**
-     * Creates a search executor that applies paging when retrieving search results.
+     * Creates an instance that is able to execute paging search requests using the provided LDAP connection.
      *
-     * @param connection The connection on which the search request is to be executed.
+     * @param delegateConnection The connection to delegate to.
      */
-    public static PagingLdapConnection wrap(LDAPInterface connection) {
-        return (PagingLdapConnection) Proxy.newProxyInstance(
-                Thread.currentThread().getContextClassLoader(),
-                new Class<?>[]{PagingLdapConnection.class},
-                new PagingLdapConnectionImpl(connection));
-    }
-
-    public PagingLdapConnectionImpl(LDAPInterface delegateConnection) {
-        _delegateConnection = delegateConnection;
+    public PagingLdapConnectionImpl(LDAPConnection delegateConnection) {
+        super(delegateConnection);
     }
 
     /**
-     * Executes the search request applying paging behind the scenes. The return type cannot be a more specific collection
-     * type,
-     * because the total number of entries matching the search request is not known in advance.
-     *
-     * @return An {@link Iterable} of {@link SearchResultEntry} items through which it is possible to iterate over the entire
-     *         result set without caring about the fact that entries are fetched by pages behind the scenes.
+     * Made available only for unit testing purposes.
      */
-    public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) {
+    /*package*/ PagingLdapConnectionImpl(LDAPInterface delegateConnection) {
+        super(delegateConnection);
+    }
+
+    @Override
+    public Iterable<SearchResultEntry> search(final SearchRequest searchRequest, final int pageSize) throws LDAPException {
+        searchRequest.replaceControl(new SimplePagedResultsControl(pageSize, null));
+
+        LOG.debug("Requesting first page of results for search request: {}", searchRequest);
+        final SearchResult firstPage = search(searchRequest);
+
         Iterable<List<SearchResultEntry>> pages =
                 new Iterable<List<SearchResultEntry>>() {
                     @Override
                     public Iterator<List<SearchResultEntry>> iterator() {
-                        return new PagingSearchIterator(_delegateConnection, searchRequest, pageSize);
+                        return new PagingSearchIterator(PagingLdapConnectionImpl.this, searchRequest, firstPage);
                     }
                 };
         return Iterables.concat(pages);
-    }
-
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getName().equals("search")
-            && args.length == 2
-            && args[0] instanceof SearchRequest
-            && args[1] instanceof Integer) {
-            return search((SearchRequest) args[0], (int) args[1]);
-        } else {
-            try {
-                return method.invoke(_delegateConnection, args);
-            } catch (InvocationTargetException e) {
-                throw e.getCause();
-            }
-        }
     }
 }
